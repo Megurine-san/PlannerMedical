@@ -1,0 +1,9 @@
+{
+  "name": "Más Vida",
+  "short_name": "Más Vida",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#011d1c",
+  "theme_color": "#011d1c",
+  "lang": "es"
+}

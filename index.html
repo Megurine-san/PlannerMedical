@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#011d1c" />
+  <title>Más Vida</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🩺</div>
+        <div><strong>Más Vida</strong></div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-view="agenda">▣ <span>Agenda</span></button>
+        <button class="nav-btn" data-view="pacientes">♙ <span>Pacientes</span></button>
+        <button class="nav-btn" data-view="cirugias">✎ <span>Cirugías</span></button>
+        <button class="nav-btn" data-view="controles">♡ <span>Controles</span></button>
+        <button class="nav-btn" data-view="estadisticas">▥ <span>Estadísticas</span></button>
+        <button class="nav-btn" data-view="ajustes">⚙ <span>Ajustes</span></button>
+      </nav>
+
+      <div class="upcoming-panel">
+        <h3>🗓 Próximas cirugías</h3>
+        <div id="upcomingSurgeries"></div>
+        <button id="seeAllSurgeries" class="ghost-full">Ver todas</button>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <div>
+          <h1>¡Buenos días! <span class="sun">☼</span></h1>
+          <p id="headerDate"></p>
+        </div>
+        <div class="top-actions">
+          <button id="searchBtn" class="icon-btn">⌕</button>
+          <button id="todayBtn" class="top-btn">Hoy</button>
+        </div>
+      </header>
+
+      <main>
+        <section id="agendaView" class="view active-view">
+          <div class="layout">
+            <div class="main-column">
+              <div id="weekStrip" class="week-strip"></div>
+
+              <div class="day-title">
+                <div>🗓 <strong id="selectedDateTitle"></strong></div>
+                <button id="goDateBtn">🗓 Ir a fecha</button>
+              </div>
+
+              <div class="summary-row">
+                <button class="summary-card consult" data-filter="consulta">
+                  <div class="summary-icon">▣</div>
+                  <div><span>Consultas</span><strong id="consultCount">0</strong></div>
+                </button>
+                <button class="summary-card surgery" data-filter="cirugia">
+                  <div class="summary-icon">♡</div>
+                  <div><span>Cirugías</span><strong id="surgeryCount">0</strong></div>
+                </button>
+                <button class="summary-card control" data-filter="control">
+                  <div class="summary-icon">♙</div>
+                  <div><span>Controles</span><strong id="controlCount">0</strong></div>
+                </button>
+              </div>
+
+              <div id="timeline" class="timeline"></div>
+            </div>
+
+            <aside class="right-column">
+              <button id="addBtn" class="new-activity">＋ Nueva actividad</button>
+
+              <div class="legend-stack">
+                <div class="legend-card consult"><div class="legend-icon">▣</div><div><strong>Consulta</strong><span>Con estado de pago</span></div></div>
+                <div class="legend-card surgery"><div class="legend-icon">✎</div><div><strong>Cirugía</strong><span>Con monto y pagos</span></div></div>
+                <div class="legend-card control"><div class="legend-icon">♡</div><div><strong>Control</strong><span>Seguimiento</span></div></div>
+              </div>
+
+              <div class="side-card">
+                <h3>Origen de los pacientes</h3>
+                <div class="origin-flex">
+                  <div id="sourceDonut" class="donut"></div>
+                  <div id="sourceLegend" class="source-legend"></div>
+                </div>
+              </div>
+
+              <div class="side-card">
+                <h3>📝 Notas rápidas</h3>
+                <textarea id="quickNotes" placeholder="Escribe aquí cualquier nota importante del día..."></textarea>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="pacientesView" class="view">
+          <div class="section-title"><h2>Pacientes</h2><p>Busca pacientes guardados por nombre, DNI o teléfono.</p></div>
+          <input id="patientSearch" class="wide-search" placeholder="⌕ Buscar paciente..." />
+          <div id="patientResults" class="list-grid"></div>
+        </section>
+
+        <section id="cirugiasView" class="view">
+          <div class="section-title"><h2>Cirugías</h2><p>Cirugías programadas y estado de pago.</p></div>
+          <div id="allSurgeries" class="list-grid"></div>
+        </section>
+
+        <section id="controlesView" class="view">
+          <div class="section-title"><h2>Controles</h2><p>Seguimientos postoperatorios.</p></div>
+          <div id="allControls" class="list-grid"></div>
+        </section>
+
+        <section id="estadisticasView" class="view">
+          <div class="section-title"><h2>Estadísticas</h2><p>Resumen de pacientes y origen.</p></div>
+          <div id="statsGrid" class="stats-grid"></div>
+        </section>
+
+        <section id="ajustesView" class="view">
+          <div class="section-title">
+            <h2>Ajustes y seguridad</h2>
+            <p>Protege el acceso y crea copias de seguridad de los datos.</p>
+          </div>
+
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h3>🔐 Bloqueo con clave</h3>
+              <p>La clave bloquea el acceso a la agenda en este dispositivo.</p>
+              <div class="settings-actions">
+                <button id="setPinBtn" class="save-btn">Crear / cambiar clave</button>
+                <button id="lockNowBtn" class="secondary-btn">Bloquear ahora</button>
+              </div>
+              <p class="settings-note">La clave no se guarda en texto visible. Se almacena una verificación criptográfica local.</p>
+            </div>
+
+            <div class="settings-card">
+              <h3>💾 Copia de seguridad</h3>
+              <p>Exporta pacientes, citas, cirugías, pagos y notas a un archivo cifrado.</p>
+              <div class="settings-actions">
+                <button id="exportBackupBtn" class="save-btn">Crear copia cifrada</button>
+              </div>
+              <p class="settings-note">Para restaurarla necesitarás la misma clave utilizada al crear la copia.</p>
+            </div>
+
+            <div class="settings-card">
+              <h3>♻ Restaurar copia</h3>
+              <p>Recupera los datos desde una copia de seguridad de Más Vida.</p>
+              <input id="backupFileInput" type="file" accept=".masvida,.json,application/json" class="file-input" />
+              <button id="restoreBackupBtn" class="secondary-btn">Restaurar archivo</button>
+              <p class="settings-note warning-note">La restauración reemplaza los datos actuales después de confirmar.</p>
+            </div>
+
+            <div class="settings-card">
+              <h3>📱 Almacenamiento</h3>
+              <p>Los datos clínicos de esta versión se guardan en el navegador del dispositivo; GitHub Pages solo aloja el código de la app.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div id="modal" class="overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div><h2 id="modalTitle">Nueva actividad</h2><p>Completa los datos necesarios.</p></div>
+        <button id="closeModal" class="close-btn">×</button>
+      </div>
+
+      <form id="appointmentForm">
+        <input type="hidden" id="editId" />
+
+        <div class="form-grid two">
+          <label>Fecha<input type="date" id="formDate" required /></label>
+          <label>Hora<input type="time" id="time" required /></label>
+        </div>
+
+        <div class="form-grid two">
+          <label>Tipo
+            <select id="type" required>
+              <option value="consulta">Consulta</option>
+              <option value="cirugia">Cirugía</option>
+              <option value="control">Control</option>
+            </select>
+          </label>
+          <label>Origen
+            <select id="source">
+              <option>Facebook</option>
+              <option>TikTok</option>
+              <option>Referido</option>
+              <option>Google</option>
+              <option>Otro</option>
+              <option>No especificado</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-section blue-section">
+          <h3>Datos del paciente</h3>
+          <label>Paciente guardado
+            <input id="patientLookup" list="patientDatalist" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
+            <datalist id="patientDatalist"></datalist>
+          </label>
+          <div class="patient-actions">
+            <button type="button" id="loadPatientBtn" class="secondary-btn">Cargar paciente</button>
+            <button type="button" id="clearPatientBtn" class="secondary-btn">Nuevo paciente</button>
+          </div>
+          <label>Nombre completo<input id="name" required /></label>
+          <div class="form-grid two">
+            <label>Edad<input type="number" id="age" min="0" max="120" /></label>
+            <label>DNI<input id="dni" inputmode="numeric" /></label>
+          </div>
+          <label>Teléfono<input id="phone" inputmode="tel" /></label>
+        </div>
+
+        <div id="consultControlPaymentFields" class="form-section gold-section">
+          <h3>Pago</h3>
+          <label>Estado
+            <select id="simplePaymentStatus">
+              <option value="pagada">Pagada</option>
+              <option value="no_pagada">No pagada</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="surgeryFields" class="form-section purple-section hidden">
+          <h3>Datos de la cirugía</h3>
+          <label>Tipo de cirugía<input id="surgeryName" placeholder="Ej. Colecistectomía" /></label>
+          <div class="form-grid two">
+            <label>Monto a cobrar (S/)<input type="number" id="surgeryAmount" min="0" step="0.01" /></label>
+            <label>Pago recibido hasta ahora (S/)<input type="number" id="surgeryPaid" min="0" step="0.01" /></label>
+          </div>
+          <label>Estado de pago
+            <select id="surgeryPaymentStatus">
+              <option value="pendiente">Pendiente</option>
+              <option value="a_cuenta">A cuenta</option>
+              <option value="pagado_completo">Pagado completo</option>
+            </select>
+          </label>
+          <div class="payment-summary" id="paymentSummary"></div>
+
+          <div class="form-grid two">
+            <label>Cirujano 1<input id="surgeon1" /></label>
+            <label>Cirujano 2<input id="surgeon2" /></label>
+          </div>
+          <div class="form-grid two">
+            <label>Anestesiólogo<input id="anesthesiologist" /></label>
+            <label>Instrumentista<input id="instrumentist" /></label>
+          </div>
+        </div>
+
+        <div id="controlFields" class="form-section green-section hidden">
+          <h3>Control postoperatorio</h3>
+          <div class="form-grid two">
+            <label>Días post cirugía<input type="number" id="postOpDays" min="0" /></label>
+            <label>Motivo
+              <select id="controlReason">
+                <option>Control</option>
+                <option>Retiro de puntos</option>
+                <option>Otro</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <label>Notas<textarea id="notes" rows="3"></textarea></label>
+
+        <div class="modal-actions">
+          <button type="button" id="deleteBtn" class="danger-btn hidden">Eliminar</button>
+          <button type="submit" class="save-btn">Guardar actividad</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="paymentOverlay" class="overlay hidden">
+    <div class="date-modal">
+      <div class="modal-header"><h2>Registrar pago</h2><button id="closePayment" class="close-btn">×</button></div>
+      <input type="hidden" id="paymentAppointmentId" />
+      <label>Monto recibido (S/)<input id="paymentAddAmount" type="number" min="0" step="0.01" class="wide-search" /></label>
+      <button id="addPaymentConfirm" class="save-btn">Agregar pago</button>
+    </div>
+  </div>
+
+  <div id="searchOverlay" class="overlay hidden">
+    <div class="search-modal">
+      <div class="modal-header"><h2>Buscar</h2><button id="closeSearch" class="close-btn">×</button></div>
+      <input id="globalSearch" class="wide-search" placeholder="Nombre, DNI, teléfono o cirugía..." />
+      <div id="globalResults" class="list-grid"></div>
+    </div>
+  </div>
+
+  <div id="dateOverlay" class="overlay hidden">
+    <div class="date-modal">
+      <div class="modal-header"><h2>Ir a fecha</h2><button id="closeDate" class="close-btn">×</button></div>
+      <input id="jumpDateInput" type="date" class="wide-search" />
+      <button id="jumpDateConfirm" class="save-btn">Ir a esta fecha</button>
+    </div>
+  </div>
+
+
+  <div id="lockOverlay" class="lock-screen hidden">
+    <div class="lock-card">
+      <div class="lock-logo">🩺</div>
+      <h1>Más Vida</h1>
+      <p id="lockMessage">Ingresa tu clave para acceder.</p>
+      <input id="unlockPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" placeholder="Clave" />
+      <button id="unlockBtn" class="save-btn">Desbloquear</button>
+      <p id="unlockError" class="unlock-error"></p>
+    </div>
+  </div>
+
+  <div id="pinOverlay" class="overlay hidden">
+    <div class="date-modal">
+      <div class="modal-header"><h2 id="pinModalTitle">Crear clave</h2><button id="closePin" class="close-btn">×</button></div>
+      <label>Nueva clave
+        <input id="newPin" type="password" inputmode="numeric" maxlength="12" class="wide-search" placeholder="Mínimo 4 caracteres" />
+      </label>
+      <label>Repetir clave
+        <input id="confirmPin" type="password" inputmode="numeric" maxlength="12" class="wide-search" placeholder="Repite la clave" />
+      </label>
+      <button id="savePinBtn" class="save-btn">Guardar clave</button>
+      <p id="pinError" class="unlock-error"></p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

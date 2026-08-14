@@ -33,10 +33,10 @@
     </aside>
 
     <section class="workspace">
-      <header class="topbar">
-        <div>
-          <h1>¡Buenos días! <span class="sun">☼</span></h1>
-          <p id="headerDate"></p>
+      <header class="topbar"><div class="greeting">
+          <h1 id="greetingTitle">¡Buenos días! <span class="sun-symbol">☀</span></h1>
+          <div id="todayLabel" class="today-label"></div>
+          <div id="dailyQuote" class="daily-quote"></div>
         </div>
         <div class="top-actions">
           <button id="searchBtn" class="icon-btn">⌕</button>
@@ -55,19 +55,13 @@
                 <button id="goDateBtn">🗓 Ir a fecha</button>
               </div>
 
-              <div class="summary-row">
-                <button class="summary-card consult" data-filter="consulta">
-                  <div class="summary-icon">▣</div>
-                  <div><span>Consultas</span><strong id="consultCount">0</strong></div>
-                </button>
-                <button class="summary-card surgery" data-filter="cirugia">
-                  <div class="summary-icon">♡</div>
-                  <div><span>Cirugías</span><strong id="surgeryCount">0</strong></div>
-                </button>
-                <button class="summary-card control" data-filter="control">
-                  <div class="summary-icon">♙</div>
-                  <div><span>Controles</span><strong id="controlCount">0</strong></div>
-                </button>
+              <div class="summary-row summary-six">
+                <button class="summary-card consult" data-filter="consulta"><div class="summary-icon">▣</div><div><span>Consultas</span><strong id="consultCount">0</strong></div></button>
+                <button class="summary-card surgery" data-filter="cirugia"><div class="summary-icon">♡</div><div><span>Cirugías</span><strong id="surgeryCount">0</strong></div></button>
+                <button class="summary-card control" data-filter="control"><div class="summary-icon">♙</div><div><span>Controles</span><strong id="controlCount">0</strong></div></button>
+                <button class="summary-card postcirugia" data-filter="postcirugia"><div class="summary-icon">✚</div><div><span>Post Cirugías</span><strong id="postSurgeryCount">0</strong></div></button>
+                <button class="summary-card muestra" data-filter="muestra"><div class="summary-icon">◉</div><div><span>Muestra Patológica</span><strong id="pathologyCount">0</strong></div></button>
+                <button class="summary-card laboratorio" data-filter="laboratorio"><div class="summary-icon">⌁</div><div><span>Apoyo en Exámenes de Laboratorio</span><strong id="labCount">0</strong></div></button>
               </div>
 
               <div id="timeline" class="timeline"></div>
@@ -76,47 +70,82 @@
             <aside class="right-column">
               <button id="addBtn" class="new-activity">＋ Nueva actividad</button>
 
-              <div class="legend-stack">
-                <div class="legend-card consult"><div class="legend-icon">▣</div><div><strong>Consulta</strong><span>Con estado de pago</span></div></div>
-                <div class="legend-card surgery"><div class="legend-icon">✎</div><div><strong>Cirugía</strong><span>Con monto y pagos</span></div></div>
-                <div class="legend-card control"><div class="legend-icon">♡</div><div><strong>Control</strong><span>Seguimiento</span></div></div>
-              </div>
-
-              <div class="side-card">
-                <h3>Origen de los pacientes</h3>
+<div class="side-card source-month-card">
+                <div class="source-card-header">
+                  <div>
+                    <h3>Origen de los pacientes</h3>
+                    <span id="sourceMonthLabel" class="source-month-label"></span>
+                  </div>
+                  <div class="source-month-total">
+                    <strong id="sourceMonthTotal">0</strong>
+                    <span>registros</span>
+                  </div>
+                </div>
                 <div class="origin-flex">
                   <div id="sourceDonut" class="donut"></div>
                   <div id="sourceLegend" class="source-legend"></div>
                 </div>
-              </div>
-
-              <div class="side-card">
-                <h3>📝 Notas rápidas</h3>
-                <textarea id="quickNotes" placeholder="Escribe aquí cualquier nota importante del día..."></textarea>
+                <div id="sourceCountsList" class="source-counts-list"></div>
               </div>
             </aside>
           </div>
         </section>
 
         <section id="pacientesView" class="view">
-          <div class="section-title"><h2>Pacientes</h2><p>Busca pacientes guardados por nombre, DNI o teléfono.</p></div>
+          <div class="section-title">
+            <h2>Pacientes</h2>
+            <p>Busca pacientes guardados por nombre, DNI o teléfono.</p>
+          </div>
           <input id="patientSearch" class="wide-search" placeholder="⌕ Buscar paciente..." />
           <div id="patientResults" class="list-grid"></div>
         </section>
 
         <section id="cirugiasView" class="view">
-          <div class="section-title"><h2>Cirugías</h2><p>Cirugías programadas y estado de pago.</p></div>
+          <div class="section-title">
+            <h2>Cirugías</h2>
+            <p>Cirugías programadas y estado de pago.</p>
+          </div>
           <div id="allSurgeries" class="list-grid"></div>
         </section>
 
         <section id="controlesView" class="view">
-          <div class="section-title"><h2>Controles</h2><p>Seguimientos postoperatorios.</p></div>
+          <div class="section-title">
+            <h2>Controles</h2>
+            <p>Seguimientos postoperatorios.</p>
+          </div>
           <div id="allControls" class="list-grid"></div>
         </section>
 
         <section id="estadisticasView" class="view">
-          <div class="section-title"><h2>Estadísticas</h2><p>Resumen de pacientes y origen.</p></div>
-          <div id="statsGrid" class="stats-grid"></div>
+          <div class="stats-header-row">
+            <div class="section-title">
+              <h2>Estadísticas</h2>
+              <p>Resumen mensual de atenciones y origen de pacientes.</p>
+            </div>
+
+            <div class="stats-total-patients">
+              <span>Pacientes atendidos</span>
+              <strong id="statsTotalPatients">0</strong>
+            </div>
+          </div>
+
+          <div class="stats-month-toolbar">
+            <button id="statsPrevMonth" type="button" class="secondary-btn">‹</button>
+            <div>
+              <span>Mes analizado</span>
+              <strong id="statsMonthLabel"></strong>
+            </div>
+            <button id="statsNextMonth" type="button" class="secondary-btn">›</button>
+          </div>
+
+          <div id="statsActivitySummary" class="stats-activity-summary"></div>
+
+          <div class="stats-breakdown-title">
+            <h3>Origen de pacientes por rubro</h3>
+            <p>Facebook, TikTok, Referido, Google y Otros dentro de cada tipo de actividad.</p>
+          </div>
+
+          <div id="statsDetailedBreakdown" class="stats-detailed-breakdown"></div>
         </section>
 
         <section id="ajustesView" class="view">
@@ -138,7 +167,7 @@
 
             <div class="settings-card">
               <h3>💾 Copia de seguridad</h3>
-              <p>Exporta pacientes, citas, cirugías, pagos y notas a un archivo cifrado.</p>
+              <p>Exporta pacientes, citas, cirugías y pagos a un archivo cifrado.</p>
               <div class="settings-actions">
                 <button id="exportBackupBtn" class="save-btn">Crear copia cifrada</button>
               </div>
@@ -155,7 +184,7 @@
 
             <div class="settings-card">
               <h3>📱 Almacenamiento</h3>
-              <p>Los datos clínicos de esta versión se guardan en el navegador del dispositivo; GitHub Pages solo aloja el código de la app.</p>
+              <p>Los datos se guardan localmente en este dispositivo. GitHub Pages aloja únicamente el código de la app.</p>
             </div>
           </div>
         </section>
@@ -174,8 +203,22 @@
         <input type="hidden" id="editId" />
 
         <div class="form-grid two">
-          <label>Fecha<input type="date" id="formDate" required /></label>
-          <label>Hora<input type="time" id="time" required /></label>
+          <label>Fecha
+            <input type="date" id="formDate" required />
+          </label>
+
+          <label>Hora
+            <div class="time-picker-selects">
+              <select id="timeHour" aria-label="Hora"></select>
+              <span class="time-separator">:</span>
+              <select id="timeMinute" aria-label="Minutos"></select>
+              <select id="timePeriod" aria-label="AM o PM">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+            <input type="hidden" id="time" required />
+          </label>
         </div>
 
         <div class="form-grid two">
@@ -184,8 +227,12 @@
               <option value="consulta">Consulta</option>
               <option value="cirugia">Cirugía</option>
               <option value="control">Control</option>
+              <option value="postcirugia">Post Cirugía</option>
+              <option value="muestra">Muestra Patológica</option>
+              <option value="laboratorio">Apoyo en Exámenes de Laboratorio</option>
             </select>
           </label>
+
           <label>Origen
             <select id="source">
               <option>Facebook</option>
@@ -198,22 +245,126 @@
           </label>
         </div>
 
-        <div class="form-section blue-section">
+        <div id="otherSourceField" class="other-source-field hidden">
+          <label>Especificar otro origen
+            <input id="sourceOther" placeholder="Ej. Recomendación de un paciente, volante, clínica, etc." />
+          </label>
+        </div>
+
+        <div id="referredByField" class="other-source-field hidden">
+          <label>¿Quién lo refirió?
+            <input id="referredBy" placeholder="Ej. Paciente María López, Dr. Pérez, familiar..." />
+          </label>
+        </div>
+
+        <!-- En controles y post cirugía, esto aparece ANTES de los datos del paciente -->
+        <div id="controlFields" class="form-section green-section hidden">
+          <h3>Control postoperatorio</h3>
+
+          <div class="form-grid two">
+            <label>Tiempo desde la cirugía
+              <input type="number" id="postOpValue" min="0" step="1" placeholder="Ej. 7" />
+            </label>
+
+            <label>Unidad
+              <select id="postOpUnit">
+                <option value="dias">Días</option>
+                <option value="meses">Meses</option>
+                <option value="anios">Años</option>
+                <option value="personalizado">Escribir manualmente</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="postOpCustomField" class="hidden other-detail-field">
+            <label>Descripción del tiempo
+              <input id="postOpCustom" placeholder="Ej. 2 meses 27 días, 1 año y 3 meses..." />
+            </label>
+          </div>
+
+          <label>Motivo
+            <select id="controlReason">
+              <option>Control</option>
+              <option>Retiro de puntos</option>
+              <option>Retiro de Dren</option>
+              <option>Otro</option>
+            </select>
+          </label>
+
+          <div id="controlReasonOtherField" class="hidden other-detail-field">
+            <label>Especificar otro motivo
+              <input id="controlReasonOther" placeholder="Escriba el motivo..." />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section blue-section patient-section">
           <h3>Datos del paciente</h3>
+
           <label>Paciente guardado
             <input id="patientLookup" list="patientDatalist" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
             <datalist id="patientDatalist"></datalist>
           </label>
+
           <div class="patient-actions">
             <button type="button" id="loadPatientBtn" class="secondary-btn">Cargar paciente</button>
             <button type="button" id="clearPatientBtn" class="secondary-btn">Nuevo paciente</button>
           </div>
-          <label>Nombre completo<input id="name" required /></label>
+
+          <label>Nombre completo
+            <input id="name" required />
+          </label>
+
           <div class="form-grid two">
-            <label>Edad<input type="number" id="age" min="0" max="120" /></label>
-            <label>DNI<input id="dni" inputmode="numeric" /></label>
+            <label>Edad
+              <input type="number" id="age" min="0" max="120" />
+            </label>
+            <label>DNI
+              <input id="dni" inputmode="numeric" />
+            </label>
           </div>
-          <label>Teléfono<input id="phone" inputmode="tel" /></label>
+
+          <div class="phone-section">
+            <div class="phone-section-title">
+              <label>Teléfonos</label>
+              <button type="button" id="addPhoneBtn" class="add-phone-btn">＋ Agregar teléfono</button>
+            </div>
+            <div id="phonesContainer" class="phones-container"></div>
+          </div>
+        <div id="pathologyFields" class="form-section pathology-section hidden">
+          <h3>Muestra patológica</h3>
+          <p class="section-help">Registra los datos principales de la muestra y su seguimiento.</p>
+
+          <label>Características de la muestra
+            <textarea id="pathologyCharacteristics" rows="3" placeholder="Ej. Tamaño, aspecto, localización, observaciones..."></textarea>
+          </label>
+
+          <label>Tipo de muestra
+            <input id="pathologyType" placeholder="Ej. Vesícula, biopsia, tejido, pólipo..." />
+          </label>
+
+          <div class="form-grid two">
+            <label>Cuándo se retiró
+              <input id="pathologyRemovedDate" type="date" />
+            </label>
+            <label>Cuándo se llevó a Patología
+              <input id="pathologySentDate" type="date" />
+            </label>
+          </div>
+
+          <label>Cuándo pedir los resultados de Patología
+            <input id="pathologyResultRequest" placeholder="Ej. En 7 días, 22/08/2026, llamar el viernes..." />
+          </label>
+        </div>
+
+        <div id="postSurgeryFields" class="form-section teal-section hidden">
+          <h3>Resultados de la cirugía</h3>
+          <p class="section-help">Registra los aspectos resaltantes, evolución o resultados importantes posteriores a la cirugía.</p>
+          <label>Aspectos resaltantes
+            <textarea id="postSurgeryResults" rows="5" placeholder="Ej. Evolución favorable, hallazgos importantes, indicaciones, observaciones..."></textarea>
+          </label>
+        </div>
+
         </div>
 
         <div id="consultControlPaymentFields" class="form-section gold-section">
@@ -221,56 +372,138 @@
           <label>Estado
             <select id="simplePaymentStatus">
               <option value="pagada">Pagada</option>
-              <option value="no_pagada">No pagada</option>
+              <option value="no_pagada">Gratis</option>
             </select>
           </label>
-        </div>
 
-        <div id="surgeryFields" class="form-section purple-section hidden">
-          <h3>Datos de la cirugía</h3>
-          <label>Tipo de cirugía<input id="surgeryName" placeholder="Ej. Colecistectomía" /></label>
-          <div class="form-grid two">
-            <label>Monto a cobrar (S/)<input type="number" id="surgeryAmount" min="0" step="0.01" /></label>
-            <label>Pago recibido hasta ahora (S/)<input type="number" id="surgeryPaid" min="0" step="0.01" /></label>
-          </div>
-          <label>Estado de pago
-            <select id="surgeryPaymentStatus">
-              <option value="pendiente">Pendiente</option>
-              <option value="a_cuenta">A cuenta</option>
-              <option value="pagado_completo">Pagado completo</option>
-            </select>
-          </label>
-          <div class="payment-summary" id="paymentSummary"></div>
-
-          <div class="form-grid two">
-            <label>Cirujano 1<input id="surgeon1" /></label>
-            <label>Cirujano 2<input id="surgeon2" /></label>
-          </div>
-          <div class="form-grid two">
-            <label>Anestesiólogo<input id="anesthesiologist" /></label>
-            <label>Instrumentista<input id="instrumentist" /></label>
-          </div>
-        </div>
-
-        <div id="controlFields" class="form-section green-section hidden">
-          <h3>Control postoperatorio</h3>
-          <div class="form-grid two">
-            <label>Días post cirugía<input type="number" id="postOpDays" min="0" /></label>
-            <label>Motivo
-              <select id="controlReason">
-                <option>Control</option>
-                <option>Retiro de puntos</option>
-                <option>Otro</option>
-              </select>
+          <div id="simplePaymentAmountField">
+            <label>Monto cobrado (S/)
+              <input type="number" id="simplePaymentAmount" min="0" step="0.01" placeholder="Ej. 80.00" />
             </label>
           </div>
         </div>
 
-        <label>Notas<textarea id="notes" rows="3"></textarea></label>
+        <div id="surgeryFields" class="form-section purple-section hidden">
+          <h3>Datos de la cirugía</h3>
 
+          <label>Tipo de cirugía
+            <input id="surgeryName" placeholder="Ej. Colecistectomía" />
+          </label>
+
+          <div class="surgery-team-section">
+            <h4>Equipo quirúrgico</h4>
+
+            <div class="form-grid two">
+              <label>Cirujano 1
+                <select id="surgeon1">
+                  <option value="">Seleccionar...</option>
+                  <option value="Dr. Miguel">Dr. Miguel</option>
+                  <option value="Dr. Christian">Dr. Christian</option>
+                  <option value="Dr. Isaias">Dr. Isaias</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+
+              <label>Cirujano 2
+                <select id="surgeon2">
+                  <option value="">Seleccionar...</option>
+                  <option value="Dr. Miguel">Dr. Miguel</option>
+                  <option value="Dr. Christian">Dr. Christian</option>
+                  <option value="Dr. Isaias">Dr. Isaias</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="surgeon1OtherField" class="hidden other-detail-field">
+              <label>Especificar Cirujano 1
+                <input id="surgeon1Other" placeholder="Nombre del cirujano..." />
+              </label>
+            </div>
+
+            <div id="surgeon2OtherField" class="hidden other-detail-field">
+              <label>Especificar Cirujano 2
+                <input id="surgeon2Other" placeholder="Nombre del cirujano..." />
+              </label>
+            </div>
+
+            <div class="form-grid two">
+              <label>Anestesiólogo
+                <select id="anesthesiologist">
+                  <option value="">Seleccionar...</option>
+                  <option value="Dr. Millán">Dr. Millán</option>
+                  <option value="Dra. Juarez">Dra. Juarez</option>
+                  <option value="Dr. Baltazar">Dr. Baltazar</option>
+                  <option value="Dra. Paula Gutierrez">Dra. Paula Gutierrez</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+
+              <label>Instrumentista
+                <select id="instrumentist">
+                  <option value="">Seleccionar...</option>
+                  <option value="Marco A.">Marco A.</option>
+                  <option value="Lic. Cecilia">Lic. Cecilia</option>
+                  <option value="Lic. Carolina">Lic. Carolina</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="anesthesiologistOtherField" class="hidden other-detail-field">
+              <label>Especificar anestesiólogo
+                <input id="anesthesiologistOther" placeholder="Nombre del anestesiólogo..." />
+              </label>
+            </div>
+
+            <div id="instrumentistOtherField" class="hidden other-detail-field">
+              <label>Especificar instrumentista
+                <input id="instrumentistOther" placeholder="Nombre del instrumentista..." />
+              </label>
+            </div>
+          </div>
+
+          <div class="surgery-payment-section">
+            <h4>Cobranza</h4>
+
+            <label>Tipo de cobranza
+              <select id="surgeryChargeType">
+                <option value="normal">Pago normal</option>
+                <option value="honorarios">Solo honorarios</option>
+                <option value="todo">Cubre todo</option>
+              </select>
+            </label>
+
+            <div class="form-grid two">
+              <label>Monto a cobrar (S/)
+                <input type="number" id="surgeryAmount" min="0" step="0.01" />
+              </label>
+
+              <label>Pago recibido hasta ahora (S/)
+                <input type="number" id="surgeryPaid" min="0" step="0.01" />
+              </label>
+            </div>
+
+            <label>Estado de pago
+              <select id="surgeryPaymentStatus">
+                <option value="pendiente">Pendiente</option>
+                <option value="a_cuenta">A cuenta</option>
+                <option value="pagado_completo">Pagado completo</option>
+              </select>
+            </label>
+
+            <div class="payment-summary" id="paymentSummary"></div>
+          </div>
+        </div>
+
+        <label>Notas
+          <textarea id="notes" rows="3"></textarea>
+        </label>
+
+        <div id="saveFeedback" class="save-feedback"></div>
         <div class="modal-actions">
           <button type="button" id="deleteBtn" class="danger-btn hidden">Eliminar</button>
-          <button type="submit" class="save-btn">Guardar actividad</button>
+          <button type="button" id="saveActivityBtn" class="save-btn">Guardar actividad</button>
         </div>
       </form>
     </div>

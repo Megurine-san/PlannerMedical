@@ -10,6 +10,14 @@
   <title>Más Vida</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css?v=5.22.0" />
+<style>
+/* v5.25: hora escribible; AM/PM conserva su selector */
+#hourSelect, #minuteSelect, #timeHour, #timeMinute{
+  text-align:center;
+  font:inherit;
+  font-weight:700;
+}
+</style>
 </head>
 <body>
   <div class="app-shell">
@@ -216,9 +224,9 @@
 
           <label>Hora
             <div class="time-picker-selects">
-              <select id="timeHour" aria-label="Hora"></select>
+              <input id="timeHour" type="text" inputmode="numeric" maxlength="2" placeholder="08" autocomplete="off">
               <span class="time-separator">:</span>
-              <select id="timeMinute" aria-label="Minutos"></select>
+              <input id="timeMinute" type="text" inputmode="numeric" maxlength="2" placeholder="00" autocomplete="off">
               <select id="timePeriod" aria-label="AM o PM">
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>
@@ -404,9 +412,9 @@
               <label>Cirujano 1
                 <select id="surgeon1">
                   <option value="">Seleccionar...</option>
-                  <option value="Dr. Miguel">Dr. Miguel</option>
-                  <option value="Dr. Christian">Dr. Christian</option>
-                  <option value="Dr. Isaias">Dr. Isaias</option>
+                  <option value="DR. MIGUEL">DR. MIGUEL</option>
+                  <option value="DR. CHRISTIAN">DR. CHRISTIAN</option>
+                  <option value="DR. ISAIAS">DR. ISAIAS</option>
                   <option value="Otro">Otro</option>
                 </select>
               </label>
@@ -414,9 +422,9 @@
               <label>Cirujano 2
                 <select id="surgeon2">
                   <option value="">Seleccionar...</option>
-                  <option value="Dr. Miguel">Dr. Miguel</option>
-                  <option value="Dr. Christian">Dr. Christian</option>
-                  <option value="Dr. Isaias">Dr. Isaias</option>
+                  <option value="DR. MIGUEL">DR. MIGUEL</option>
+                  <option value="DR. CHRISTIAN">DR. CHRISTIAN</option>
+                  <option value="DR. ISAIAS">DR. ISAIAS</option>
                   <option value="Otro">Otro</option>
                 </select>
               </label>
@@ -438,10 +446,10 @@
               <label>Anestesiólogo
                 <select id="anesthesiologist">
                   <option value="">Seleccionar...</option>
-                  <option value="Dr. Millán">Dr. Millán</option>
-                  <option value="Dra. Juarez">Dra. Juarez</option>
-                  <option value="Dr. Baltazar">Dr. Baltazar</option>
-                  <option value="Dra. Paula Gutierrez">Dra. Paula Gutierrez</option>
+                  <option value="DR. MILLÁN">DR. MILLÁN</option>
+                  <option value="DRA. JUAREZ">DRA. JUAREZ</option>
+                  <option value="DR. BALTAZAR">DR. BALTAZAR</option>
+                  <option value="DRA. PAULA GUTIERREZ">DRA. PAULA GUTIERREZ</option>
                   <option value="Otro">Otro</option>
                 </select>
               </label>
@@ -449,9 +457,9 @@
               <label>Instrumentista
                 <select id="instrumentist">
                   <option value="">Seleccionar...</option>
-                  <option value="Marco A.">Marco A.</option>
-                  <option value="Lic. Cecilia">Lic. Cecilia</option>
-                  <option value="Lic. Carolina">Lic. Carolina</option>
+                  <option value="MARCO A.">MARCO A.</option>
+                  <option value="LIC. CECILIA">LIC. CECILIA</option>
+                  <option value="LIC. CAROLINA">LIC. CAROLINA</option>
                   <option value="Otro">Otro</option>
                 </select>
               </label>

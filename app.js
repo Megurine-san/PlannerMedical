@@ -126,6 +126,24 @@ function updateControlReasonOther(){
   toggleOtherDetail("controlReason","controlReasonOtherField");
 }
 
+
+function normalizeSurgicalTeamName(value){
+  const v=String(value||"").trim();
+  const map={
+    "Dr. Miguel":"DR. MIGUEL",
+    "Dr. Christian":"DR. CHRISTIAN",
+    "Dr. Isaias":"DR. ISAIAS",
+    "Dr. Millán":"DR. MILLÁN",
+    "Dra. Juarez":"DRA. JUAREZ",
+    "Dr. Baltazar":"DR. BALTAZAR",
+    "Dra. Paula Gutierrez":"DRA. PAULA GUTIERREZ",
+    "Marco A.":"MARCO A.",
+    "Lic. Cecilia":"LIC. CECILIA",
+    "Lic. Carolina":"LIC. CAROLINA"
+  };
+  return map[v]||v;
+}
+
 function updateSurgeryTeamOtherFields(){
   toggleOtherDetail("surgeon1","surgeon1OtherField");
   toggleOtherDetail("surgeon2","surgeon2OtherField");
@@ -874,14 +892,19 @@ function editAppointment(id){
   $("surgeryPaid").value=a.surgeryPaid||"";
   $("surgeryPaymentStatus").value=a.surgeryPaymentStatus||"pendiente";$("surgeryChargeType").value=a.surgeryChargeType||"normal";
 
-  const surgeonOptions=["","Dr. Miguel","Dr. Christian","Dr. Isaias"];
-  const anesthOptions=["","Dr. Millán","Dra. Juarez","Dr. Baltazar","Dra. Paula Gutierrez"];
-  const instrOptions=["","Marco A.","Lic. Cecilia","Lic. Carolina"];
+  const surgeonOptions=["","DR. MIGUEL","DR. CHRISTIAN","DR. ISAIAS"];
+  const anesthOptions=["","DR. MILLÁN","DRA. JUAREZ","DR. BALTAZAR","DRA. PAULA GUTIERREZ"];
+  const instrOptions=["","MARCO A.","LIC. CECILIA","LIC. CAROLINA"];
 
-  if(surgeonOptions.includes(a.surgeon1||"")){$("surgeon1").value=a.surgeon1||"";$("surgeon1Other").value="";}else{$("surgeon1").value="Otro";$("surgeon1Other").value=a.surgeon1||"";}
-  if(surgeonOptions.includes(a.surgeon2||"")){$("surgeon2").value=a.surgeon2||"";$("surgeon2Other").value="";}else{$("surgeon2").value="Otro";$("surgeon2Other").value=a.surgeon2||"";}
-  if(anesthOptions.includes(a.anesthesiologist||"")){$("anesthesiologist").value=a.anesthesiologist||"";$("anesthesiologistOther").value="";}else{$("anesthesiologist").value="Otro";$("anesthesiologistOther").value=a.anesthesiologist||"";}
-  if(instrOptions.includes(a.instrumentist||"")){$("instrumentist").value=a.instrumentist||"";$("instrumentistOther").value="";}else{$("instrumentist").value="Otro";$("instrumentistOther").value=a.instrumentist||"";}
+  const s1=normalizeSurgicalTeamName(a.surgeon1);
+  const s2=normalizeSurgicalTeamName(a.surgeon2);
+  const an=normalizeSurgicalTeamName(a.anesthesiologist);
+  const ins=normalizeSurgicalTeamName(a.instrumentist);
+
+  if(surgeonOptions.includes(s1)){$("surgeon1").value=s1;$("surgeon1Other").value="";}else{$("surgeon1").value="Otro";$("surgeon1Other").value=s1;}
+  if(surgeonOptions.includes(s2)){$("surgeon2").value=s2;$("surgeon2Other").value="";}else{$("surgeon2").value="Otro";$("surgeon2Other").value=s2;}
+  if(anesthOptions.includes(an)){$("anesthesiologist").value=an;$("anesthesiologistOther").value="";}else{$("anesthesiologist").value="Otro";$("anesthesiologistOther").value=an;}
+  if(instrOptions.includes(ins)){$("instrumentist").value=ins;$("instrumentistOther").value="";}else{$("instrumentist").value="Otro";$("instrumentistOther").value=ins;}
 
   $("postOpValue").value=(a.postOpValue!==undefined?a.postOpValue:(a.postOpDays||""));
   $("postOpUnit").value=a.postOpUnit||"dias";
@@ -1182,3 +1205,34 @@ $("restoreBackupBtn").onclick=async()=>{
 render();
 initializeSecurity();
 
+
+
+function normalizeTypedClock(){
+  const hEl=document.getElementById("hourSelect")||document.getElementById("timeHour");
+  const mEl=document.getElementById("minuteSelect")||document.getElementById("timeMinute");
+  if(!hEl||!mEl) return true;
+  let h=parseInt(String(hEl.value||"").replace(/\D/g,""),10);
+  let m=parseInt(String(mEl.value||"").replace(/\D/g,""),10);
+  if(!Number.isFinite(h) || h<1 || h>12){
+    hEl.focus();
+    return false;
+  }
+  if(!Number.isFinite(m) || m<0 || m>59){
+    mEl.focus();
+    return false;
+  }
+  hEl.value=String(h).padStart(2,"0");
+  mEl.value=String(m).padStart(2,"0");
+  return true;
+}
+document.addEventListener("input",e=>{
+  if(["hourSelect","minuteSelect","timeHour","timeMinute"].includes(e.target?.id)){
+    e.target.value=String(e.target.value||"").replace(/\D/g,"").slice(0,2);
+  }
+});
+document.addEventListener("blur",e=>{
+  if(["hourSelect","minuteSelect","timeHour","timeMinute"].includes(e.target?.id)){
+    const n=parseInt(e.target.value,10);
+    if(Number.isFinite(n)) e.target.value=String(n).padStart(2,"0");
+  }
+},true);

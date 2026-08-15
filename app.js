@@ -158,8 +158,8 @@ function selectedTeamValue(selectId, otherId){
 }
 
 function initEasyTimePicker(){
-  $("timeHour").innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${String(i+1).padStart(2,"0")}</option>`).join("");
-  $("timeMinute").innerHTML=Array.from({length:60},(_,i)=>`<option value="${i}">${String(i).padStart(2,"0")}</option>`).join("");
+  $("timeHour").innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${STRING(I+1).PADSTART(2,"0")}</option>`).join("");
+  $("timeMinute").innerHTML=Array.from({length:60},(_,i)=>`<option value="${i}">${STRING(I).PADSTART(2,"0")}</option>`).join("");
 }
 
 function syncEasyTimeToHidden(){

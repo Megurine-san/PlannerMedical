@@ -18,6 +18,10 @@
   font-weight:700;
 }
 </style>
+<style>
+/* v5.26: opciones de listas en MAYÚSCULAS, sin modificar los valores guardados */
+select option { text-transform: uppercase; }
+</style>
 </head>
 <body>
   <div class="app-shell">
@@ -239,23 +243,23 @@
         <div class="form-grid two">
           <label>Tipo
             <select id="type" required>
-              <option value="consulta">Consulta</option>
-              <option value="cirugia">Cirugía</option>
-              <option value="control">Control</option>
-              <option value="postcirugia">Post Cirugía</option>
-              <option value="muestra">Muestra Patológica</option>
-              <option value="laboratorio">Apoyo en Exámenes de Laboratorio</option>
+              <option value="consulta">CONSULTA</option>
+              <option value="cirugia">CIRUGÍA</option>
+              <option value="control">CONTROL</option>
+              <option value="postcirugia">POST CIRUGÍA</option>
+              <option value="muestra">MUESTRA PATOLÓGICA</option>
+              <option value="laboratorio">APOYO EN EXÁMENES DE LABORATORIO</option>
             </select>
           </label>
 
           <label>Origen
             <select id="source">
-              <option>Facebook</option>
-              <option>TikTok</option>
-              <option>Referido</option>
-              <option>Google</option>
-              <option>Otro</option>
-              <option>No especificado</option>
+              <option>FACEBOOK</option>
+              <option>TIKTOK</option>
+              <option>REFERIDO</option>
+              <option>GOOGLE</option>
+              <option>OTRO</option>
+              <option>NO ESPECIFICADO</option>
             </select>
           </label>
         </div>
@@ -283,10 +287,10 @@
 
             <label>Unidad
               <select id="postOpUnit">
-                <option value="dias">Días</option>
-                <option value="meses">Meses</option>
-                <option value="anios">Años</option>
-                <option value="personalizado">Escribir manualmente</option>
+                <option value="dias">DÍAS</option>
+                <option value="meses">MESES</option>
+                <option value="anios">AÑOS</option>
+                <option value="personalizado">ESCRIBIR MANUALMENTE</option>
               </select>
             </label>
           </div>
@@ -299,10 +303,10 @@
 
           <label>Motivo
             <select id="controlReason">
-              <option>Control</option>
-              <option>Retiro de puntos</option>
-              <option>Retiro de Dren</option>
-              <option>Otro</option>
+              <option>CONTROL</option>
+              <option>RETIRO DE PUNTOS</option>
+              <option>RETIRO DE DREN</option>
+              <option>OTRO</option>
             </select>
           </label>
 
@@ -386,8 +390,8 @@
           <h3>Pago</h3>
           <label>Estado
             <select id="simplePaymentStatus">
-              <option value="pagada">Pagada</option>
-              <option value="no_pagada">Gratis</option>
+              <option value="pagada">PAGADA</option>
+              <option value="no_pagada">GRATIS</option>
             </select>
           </label>
 
@@ -411,21 +415,21 @@
             <div class="form-grid two">
               <label>Cirujano 1
                 <select id="surgeon1">
-                  <option value="">Seleccionar...</option>
+                  <option value="">SELECCIONAR...</option>
                   <option value="DR. MIGUEL">DR. MIGUEL</option>
                   <option value="DR. CHRISTIAN">DR. CHRISTIAN</option>
                   <option value="DR. ISAIAS">DR. ISAIAS</option>
-                  <option value="Otro">Otro</option>
+                  <option value="Otro">OTRO</option>
                 </select>
               </label>
 
               <label>Cirujano 2
                 <select id="surgeon2">
-                  <option value="">Seleccionar...</option>
+                  <option value="">SELECCIONAR...</option>
                   <option value="DR. MIGUEL">DR. MIGUEL</option>
                   <option value="DR. CHRISTIAN">DR. CHRISTIAN</option>
                   <option value="DR. ISAIAS">DR. ISAIAS</option>
-                  <option value="Otro">Otro</option>
+                  <option value="Otro">OTRO</option>
                 </select>
               </label>
             </div>
@@ -445,22 +449,22 @@
             <div class="form-grid two">
               <label>Anestesiólogo
                 <select id="anesthesiologist">
-                  <option value="">Seleccionar...</option>
+                  <option value="">SELECCIONAR...</option>
                   <option value="DR. MILLÁN">DR. MILLÁN</option>
                   <option value="DRA. JUAREZ">DRA. JUAREZ</option>
                   <option value="DR. BALTAZAR">DR. BALTAZAR</option>
                   <option value="DRA. PAULA GUTIERREZ">DRA. PAULA GUTIERREZ</option>
-                  <option value="Otro">Otro</option>
+                  <option value="Otro">OTRO</option>
                 </select>
               </label>
 
               <label>Instrumentista
                 <select id="instrumentist">
-                  <option value="">Seleccionar...</option>
+                  <option value="">SELECCIONAR...</option>
                   <option value="MARCO A.">MARCO A.</option>
                   <option value="LIC. CECILIA">LIC. CECILIA</option>
                   <option value="LIC. CAROLINA">LIC. CAROLINA</option>
-                  <option value="Otro">Otro</option>
+                  <option value="Otro">OTRO</option>
                 </select>
               </label>
             </div>
@@ -483,9 +487,9 @@
 
             <label>Tipo de cobranza
               <select id="surgeryChargeType">
-                <option value="normal">Pago normal</option>
-                <option value="honorarios">Solo honorarios</option>
-                <option value="todo">Cubre todo</option>
+                <option value="normal">PAQUETE COMPLETO</option>
+                <option value="honorarios">SOLO HONORARIOS</option>
+                <option value="todo">TODO INCLUIDO</option>
               </select>
             </label>
 
@@ -501,9 +505,9 @@
 
             <label>Estado de pago
               <select id="surgeryPaymentStatus">
-                <option value="pendiente">Pendiente</option>
-                <option value="a_cuenta">A cuenta</option>
-                <option value="pagado_completo">Pagado completo</option>
+                <option value="pendiente">PENDIENTE</option>
+                <option value="a_cuenta">A CUENTA</option>
+                <option value="pagado_completo">PAGADO COMPLETO</option>
               </select>
             </label>
 

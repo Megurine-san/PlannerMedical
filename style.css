@@ -774,3 +774,80 @@ main{max-width:1500px;margin:auto;padding:14px 34px 40px}.layout{display:grid;gr
     font-size:20px !important;
   }
 }
+
+/* v5.28 — reparación de Ir a fecha */
+#goDateBtn{
+  position:relative !important;
+  z-index:20 !important;
+  pointer-events:auto !important;
+  cursor:pointer !important;
+  touch-action:manipulation;
+}
+#dateOverlay{
+  z-index:1000 !important;
+}
+
+/* v5.29 — Ir a fecha usa el selector nativo del navegador */
+.go-date-native{
+  position:relative;
+  display:inline-block;
+}
+.go-date-native #goDateBtn{
+  position:relative !important;
+  z-index:1 !important;
+  pointer-events:none !important;
+  width:100%;
+}
+.go-date-native #goDateNativeInput{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  z-index:5;
+  cursor:pointer;
+  pointer-events:auto;
+  touch-action:manipulation;
+}
+
+/* v5.30 — Ir a fecha: botón directo + modal propio */
+#goDateBtn{
+  position:relative !important;
+  z-index:10 !important;
+  pointer-events:auto !important;
+  cursor:pointer !important;
+  touch-action:manipulation !important;
+}
+#dateOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:99999 !important;
+  pointer-events:auto !important;
+}
+#dateOverlay.hidden{
+  display:none !important;
+}
+#dateOverlay:not(.hidden){
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+/* v5.31 — campos de OTRO/OTROS/REFERIDO */
+.other-source-field:not(.hidden),
+.other-detail-field:not(.hidden){
+  display:block !important;
+}
+
+/* v5.32 — OTRO en equipo quirúrgico: activación directa */
+.surgery-team-section .other-detail-field:not(.hidden){
+  display:block !important;
+  width:100% !important;
+  margin:10px 0 14px !important;
+  padding:12px !important;
+  border:1px solid rgba(198,107,223,.30) !important;
+  background:rgba(198,107,223,.045) !important;
+}
+.surgery-team-section .other-detail-field:not(.hidden) input{
+  width:100% !important;
+}

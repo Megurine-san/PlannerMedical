@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Más Vida</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=5.22.0" />
+  <link rel="stylesheet" href="style.css?v=5.32.0" />
 <style>
 /* v5.25: hora escribible; AM/PM conserva su selector */
 #hourSelect, #minuteSelect, #timeHour, #timeMinute{
@@ -71,7 +71,10 @@ select option { text-transform: uppercase; }
 
               <div class="day-title">
                 <div>🗓 <strong id="selectedDateTitle"></strong></div>
-                <button id="goDateBtn">🗓 Ir a fecha</button>
+                <button id="goDateBtn" type="button"
+                  onclick="var o=document.getElementById('dateOverlay'),i=document.getElementById('jumpDateInput'); if(o&&i){ i.value=(window.__masVidaSelectedDateKey?window.__masVidaSelectedDateKey():''); o.classList.remove('hidden'); setTimeout(function(){i.focus();},50); }">
+                  🗓 Ir a fecha
+                </button>
               </div>
 
               <div class="summary-row summary-six">
@@ -414,7 +417,7 @@ select option { text-transform: uppercase; }
 
             <div class="form-grid two">
               <label>Cirujano 1
-                <select id="surgeon1">
+                <select id="surgeon1" onchange="var f=document.getElementById('surgeon1OtherField');if(f){var show=/^(otro|otros|otra|otras)$/i.test(String(this.value||'').trim());f.classList.toggle('hidden',!show);if(!show){var i=f.querySelector('input,textarea');if(i)i.value='';}}">
                   <option value="">SELECCIONAR...</option>
                   <option value="DR. MIGUEL">DR. MIGUEL</option>
                   <option value="DR. CHRISTIAN">DR. CHRISTIAN</option>
@@ -424,7 +427,7 @@ select option { text-transform: uppercase; }
               </label>
 
               <label>Cirujano 2
-                <select id="surgeon2">
+                <select id="surgeon2" onchange="var f=document.getElementById('surgeon2OtherField');if(f){var show=/^(otro|otros|otra|otras)$/i.test(String(this.value||'').trim());f.classList.toggle('hidden',!show);if(!show){var i=f.querySelector('input,textarea');if(i)i.value='';}}">
                   <option value="">SELECCIONAR...</option>
                   <option value="DR. MIGUEL">DR. MIGUEL</option>
                   <option value="DR. CHRISTIAN">DR. CHRISTIAN</option>
@@ -448,7 +451,7 @@ select option { text-transform: uppercase; }
 
             <div class="form-grid two">
               <label>Anestesiólogo
-                <select id="anesthesiologist">
+                <select id="anesthesiologist" onchange="var f=document.getElementById('anesthesiologistOtherField');if(f){var show=/^(otro|otros|otra|otras)$/i.test(String(this.value||'').trim());f.classList.toggle('hidden',!show);if(!show){var i=f.querySelector('input,textarea');if(i)i.value='';}}">
                   <option value="">SELECCIONAR...</option>
                   <option value="DR. MILLÁN">DR. MILLÁN</option>
                   <option value="DRA. JUAREZ">DRA. JUAREZ</option>
@@ -459,7 +462,7 @@ select option { text-transform: uppercase; }
               </label>
 
               <label>Instrumentista
-                <select id="instrumentist">
+                <select id="instrumentist" onchange="var f=document.getElementById('instrumentistOtherField');if(f){var show=/^(otro|otros|otra|otras)$/i.test(String(this.value||'').trim());f.classList.toggle('hidden',!show);if(!show){var i=f.querySelector('input,textarea');if(i)i.value='';}}">
                   <option value="">SELECCIONAR...</option>
                   <option value="MARCO A.">MARCO A.</option>
                   <option value="LIC. CECILIA">LIC. CECILIA</option>
@@ -547,9 +550,11 @@ select option { text-transform: uppercase; }
 
   <div id="dateOverlay" class="overlay hidden">
     <div class="date-modal">
-      <div class="modal-header"><h2>Ir a fecha</h2><button id="closeDate" class="close-btn">×</button></div>
+      <div class="modal-header"><h2>Ir a fecha</h2><button id="closeDate" type="button" class="close-btn"
+       onclick="document.getElementById('dateOverlay').classList.add('hidden')">×</button></div>
       <input id="jumpDateInput" type="date" class="wide-search" />
-      <button id="jumpDateConfirm" class="save-btn">Ir a esta fecha</button>
+      <button id="jumpDateConfirm" type="button" class="save-btn"
+       onclick="var i=document.getElementById('jumpDateInput'); if(i&&i.value&&window.__masVidaGoToDate){window.__masVidaGoToDate(i.value);}">Ir a esta fecha</button>
     </div>
   </div>
 
@@ -579,6 +584,6 @@ select option { text-transform: uppercase; }
     </div>
   </div>
 
-  <script src="app.js?v=5.22.0"></script>
+  <script src="app.js?v=5.32.0"></script>
 </body>
 </html>

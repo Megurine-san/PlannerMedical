@@ -98,15 +98,6 @@ const sourceColors={Facebook:"#4d95c7",TikTok:"#9f57b8",Referido:"#63b458",Googl
 const sourceOrder=["Facebook","TikTok","Referido","Google","Otro"];
 
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
-window.__masVidaSelectedDateKey=()=>dateKey(selectedDate);
-window.__masVidaGoToDate=(value)=>{
-  if(!value)return;
-  selectedDate=new Date(value+"T12:00:00");
-  activeFilter=null;
-  const overlay=document.getElementById("dateOverlay");
-  if(overlay)overlay.classList.add("hidden");
-  render();
-};
 function formatDate(d,opts={weekday:"long",day:"numeric",month:"long",year:"numeric"}){return new Intl.DateTimeFormat("es-PE",opts).format(d)}
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function save(){
@@ -132,8 +123,7 @@ function toggleOtherDetail(selectId, fieldId){
 }
 
 function updateControlReasonOther(){
-  const el=$("controlReason");
-  if(el)setConditionalField("controlReasonOtherField",isOtherChoice(el.value));
+  toggleOtherDetail("controlReason","controlReasonOtherField");
 }
 
 
@@ -155,25 +145,21 @@ function normalizeSurgicalTeamName(value){
 }
 
 function updateSurgeryTeamOtherFields(){
-  [["surgeon1","surgeon1OtherField"],["surgeon2","surgeon2OtherField"],["anesthesiologist","anesthesiologistOtherField"],["instrumentist","instrumentistOtherField"]]
-    .forEach(([selectId,fieldId])=>{
-      const el=$(selectId);
-      if(el)setConditionalField(fieldId,isOtherChoice(el.value));
-    });
+  toggleOtherDetail("surgeon1","surgeon1OtherField");
+  toggleOtherDetail("surgeon2","surgeon2OtherField");
+  toggleOtherDetail("anesthesiologist","anesthesiologistOtherField");
+  toggleOtherDetail("instrumentist","instrumentistOtherField");
 }
 
 function selectedTeamValue(selectId, otherId){
   const value=$(selectId).value;
-  if(isOtherChoice(value)){
-    const custom=$(otherId).value.trim();
-    return custom || value;
-  }
+  if(value==="Otro") return $(otherId).value.trim() || "Otro";
   return value;
 }
 
 function initEasyTimePicker(){
-  $("timeHour").innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${STRING(I+1).PADSTART(2,"0")}</option>`).join("");
-  $("timeMinute").innerHTML=Array.from({length:60},(_,i)=>`<option value="${i}">${STRING(I).PADSTART(2,"0")}</option>`).join("");
+  $("timeHour").innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${String(i+1).padStart(2,"0")}</option>`).join("");
+  $("timeMinute").innerHTML=Array.from({length:60},(_,i)=>`<option value="${i}">${String(i).padStart(2,"0")}</option>`).join("");
 }
 
 function syncEasyTimeToHidden(){
@@ -233,63 +219,26 @@ function postOpDisplay(a){
 
 function sourceDisplay(a){
   if(!a || !a.source || a.source==="No especificado") return "";
-  if(isOtherChoice(a.source) && a.sourceOther && a.sourceOther.trim()){
+  if(a.source==="Otro" && a.sourceOther && a.sourceOther.trim()){
     return a.sourceOther.trim();
   }
-  if(String(a.source||"").trim().toLowerCase()==="referido" && a.referredBy && a.referredBy.trim()){
+  if(a.source==="Referido" && a.referredBy && a.referredBy.trim()){
     return `Referido: ${a.referredBy.trim()}`;
   }
   return a.source;
 }
 
 
-
-function isOtherChoice(value){
-  return /^(otro|otros|otra|otras)$/i.test(String(value||"").trim());
-}
-
-function setConditionalField(fieldId, show, clearWhenHidden=true){
-  const field=document.getElementById(fieldId);
-  if(!field)return;
-  field.classList.toggle("hidden",!show);
-  if(!show && clearWhenHidden){
-    const input=field.querySelector("input,textarea");
-    if(input)input.value="";
-  }
-}
-
-function refreshConditionalFields(){
-  const source=document.getElementById("source");
-  if(source){
-    setConditionalField("otherSourceField",isOtherChoice(source.value));
-    setConditionalField("referredByField",String(source.value||"").trim().toLowerCase()==="referido");
-  }
-
-  const reason=document.getElementById("controlReason");
-  if(reason){
-    setConditionalField("controlReasonOtherField",isOtherChoice(reason.value));
-  }
-
-  const teamMap=[
-    ["surgeon1","surgeon1OtherField"],
-    ["surgeon2","surgeon2OtherField"],
-    ["anesthesiologist","anesthesiologistOtherField"],
-    ["instrumentist","instrumentistOtherField"]
-  ];
-  teamMap.forEach(([selectId,fieldId])=>{
-    const select=document.getElementById(selectId);
-    if(select)setConditionalField(fieldId,isOtherChoice(select.value));
-  });
-}
-
 function updateReferredByField(){
-  const isReferred=String($("source").value||"").trim().toLowerCase()==="referido";
-  setConditionalField("referredByField",isReferred);
+  const isReferred=$("source").value==="Referido";
+  $("referredByField").classList.toggle("hidden",!isReferred);
+  if(!isReferred)$("referredBy").value="";
 }
 
 function updateOtherSourceField(){
-  const isOther=isOtherChoice($("source").value);
-  setConditionalField("otherSourceField",isOther);
+  const isOther=$("source").value==="Otro";
+  $("otherSourceField").classList.toggle("hidden",!isOther);
+  if(!isOther)$("sourceOther").value="";$("referredBy").value="";
   updateReferredByField();
 }
 
@@ -565,9 +514,9 @@ function render(){
 
 
 function surgeryChargeTypeLabel(v){
-  if(v==="honorarios")return "Solo honorarios";
-  if(v==="todo")return "Cubre todo";
-  return "Pago normal";
+  if(v==="honorarios")return "SOLO HONORARIOS";
+  if(v==="todo")return "TODO INCLUIDO";
+  return "PAQUETE COMPLETO";
 }
 
 function paymentText(a){
@@ -591,7 +540,7 @@ function renderTimeline(list){
     if(a.type==="cirugia"){
       extra=`<div class="surgery-team"><b>EQUIPO QUIRÚRGICO</b><br>👤 Cirujano 1: ${esc(a.surgeon1||"—")}<br>👤 Cirujano 2: ${esc(a.surgeon2||"—")}<br>👤 Anestesiólogo: ${esc(a.anesthesiologist||"—")}<br>👤 Instrumentista: ${esc(a.instrumentist||"—")}<div class="surgery-payment"><b>${esc(surgeryChargeTypeLabel(a.surgeryChargeType||"normal"))}</b></div><div class="surgery-payment ${pay.balance>0?"balance-due":"paid-full"}">${esc(pay.detail)}</div></div>`;
     } else if(a.type==="control"){
-      const reason=(isOtherChoice(a.controlReason)&&a.controlReasonOther)?`Otro: ${a.controlReasonOther}`:(a.controlReason||"Control");
+      const reason=(a.controlReason==="Otro"&&a.controlReasonOther)?`Otro: ${a.controlReasonOther}`:(a.controlReason||"Control");
       extra=`<div class="postop-info"><strong>${esc(postOpDisplay(a))} post cirugía</strong><span>${esc(reason)}</span></div>`;
     } else if(a.type==="postcirugia"){
       extra=`<div class="postop-info post-surgery-result"><strong>Resultados de la cirugía</strong><span>${esc(a.postSurgeryResults||"Sin observaciones registradas")}</span></div>`;
@@ -682,7 +631,7 @@ function historyDetail(a){
     return a.surgeryName ? `Cirugía · ${a.surgeryName}` : "Cirugía";
   }
   if(a.type==="control"){
-    const reason=(isOtherChoice(a.controlReason)&&a.controlReasonOther)
+    const reason=(a.controlReason==="Otro"&&a.controlReasonOther)
       ? `Otro: ${a.controlReasonOther}`
       : (a.controlReason||"Control");
     return `${reason} · ${postOpDisplay(a)} post cirugía`;
@@ -922,7 +871,7 @@ function openNew(){
   updateControlReasonOther();
   updateSurgeryTeamOtherFields();
   updateSimplePaymentAmountField();updateFields();
-  $("modal").classList.remove("hidden");setTimeout(refreshConditionalFields,0);
+  $("modal").classList.remove("hidden");
 }
 function editAppointment(id){
   const a=appointments.find(x=>x.id===id);if(!a)return;
@@ -972,7 +921,7 @@ function editAppointment(id){
   updateControlReasonOther();
   updateSurgeryTeamOtherFields();
   updateSimplePaymentAmountField();updateFields();
-  $("modal").classList.remove("hidden");setTimeout(refreshConditionalFields,0);
+  $("modal").classList.remove("hidden");
 }
 function openPayment(id){
   const a=appointments.find(x=>x.id===id);if(!a)return;
@@ -1057,8 +1006,8 @@ function saveActivityFromForm(){
       time:$("time").value||"08:00",
       type,
       source:$("source").value,
-      sourceOther:isOtherChoice($("source").value)?$("sourceOther").value.trim():"",
-      referredBy:String($("source").value||"").trim().toLowerCase()==="referido"?$("referredBy").value.trim():"",
+      sourceOther:$("source").value==="Otro"?$("sourceOther").value.trim():"",
+      referredBy:$("source").value==="Referido"?$("referredBy").value.trim():"",
       name,
       age:$("age").value,
       dni:$("dni").value.trim(),
@@ -1080,7 +1029,7 @@ function saveActivityFromForm(){
       postOpCustom:$("postOpUnit").value==="personalizado"?$("postOpCustom").value.trim():"",
       postOpDays:$("postOpUnit").value==="dias"?$("postOpValue").value:"",
       controlReason:$("controlReason").value,
-      controlReasonOther:isOtherChoice($("controlReason").value)?$("controlReasonOther").value.trim():"",
+      controlReasonOther:$("controlReason").value==="Otro"?$("controlReasonOther").value.trim():"",
       postSurgeryResults:$("postSurgeryResults").value.trim(),
       pathologyCharacteristics:$("pathologyCharacteristics").value.trim(),
       pathologyType:$("pathologyType").value.trim(),
@@ -1145,9 +1094,9 @@ function renderGlobal(){
   $("globalResults").innerHTML=list.length?list.map(a=>`<div class="result-card"><h3>${esc(a.name)}</h3><p>${esc(a.date)} · ${esc(a.time)} · ${label(a.type)}</p><p>DNI ${esc(a.dni||"—")} · ${esc(phonesDisplay(a.phones,a.phone))}</p></div>`).join(""):`<div class="empty">No se encontraron resultados.</div>`;
 }
 
-
-
-
+$("goDateBtn").onclick=()=>{$("jumpDateInput").value=dateKey(selectedDate);$("dateOverlay").classList.remove("hidden")};
+$("closeDate").onclick=()=>$("dateOverlay").classList.add("hidden");
+$("jumpDateConfirm").onclick=()=>{const v=$("jumpDateInput").value;if(!v)return;selectedDate=new Date(v+"T12:00:00");activeFilter=null;$("dateOverlay").classList.add("hidden");render()};
 
 
 $("unlockBtn").onclick=async()=>{
@@ -1287,18 +1236,3 @@ document.addEventListener("blur",e=>{
     if(Number.isFinite(n)) e.target.value=String(n).padStart(2,"0");
   }
 },true);
-
-
-document.addEventListener("change",function(e){
-  const id=e.target && e.target.id;
-  if([
-    "source",
-    "controlReason",
-    "surgeon1",
-    "surgeon2",
-    "anesthesiologist",
-    "instrumentist"
-  ].includes(id)){
-    refreshConditionalFields();
-  }
-});

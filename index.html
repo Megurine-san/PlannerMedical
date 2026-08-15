@@ -51,7 +51,11 @@
         <section id="agendaView" class="view active-view">
           <div class="layout">
             <div class="main-column">
-              <div id="weekStrip" class="week-strip"></div>
+              <div class="week-navigation">
+                <button id="prevWeek" type="button" class="week-arrow" aria-label="Semana anterior">‹</button>
+                <div id="weekStrip" class="week-strip"></div>
+                <button id="nextWeek" type="button" class="week-arrow" aria-label="Semana siguiente">›</button>
+              </div>
 
               <div class="day-title">
                 <div>🗓 <strong id="selectedDateTitle"></strong></div>

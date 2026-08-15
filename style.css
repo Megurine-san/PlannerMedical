@@ -633,3 +633,144 @@ main{max-width:1500px;margin:auto;padding:14px 34px 40px}.layout{display:grid;gr
     grid-template-columns:1fr 1fr;
   }
 }
+
+
+/* v5.23 — Navegación semanal y tarjetas legibles en tablet */
+
+/* La barra semanal ocupa exactamente: flecha + 7 días + flecha */
+.week-navigation{
+  display:grid !important;
+  grid-template-columns:48px minmax(0,1fr) 48px !important;
+  gap:9px !important;
+  align-items:stretch !important;
+  margin-bottom:16px !important;
+}
+.week-navigation > .week-strip{
+  display:grid !important;
+  grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+  gap:7px !important;
+  margin-bottom:0 !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+.week-navigation > .week-arrow{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:0 !important;
+  min-height:96px !important;
+  font-size:34px !important;
+  font-weight:700 !important;
+  border:1px solid var(--line) !important;
+  background:rgba(3,48,45,.60) !important;
+  color:var(--cream) !important;
+  border-radius:13px !important;
+}
+.week-navigation > .week-arrow:active{
+  transform:scale(.97);
+}
+
+/* Evita que cualquier contenido de una cita invada otra columna */
+.appt-card > *{
+  min-width:0;
+}
+.appt-card .type-pill,
+.appt-card .origin-pill,
+.appt-card .payment-pill{
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  vertical-align:top;
+  margin-bottom:4px;
+}
+.patient-line{
+  flex-wrap:wrap;
+}
+.patient-line strong,
+.patient-meta span,
+.surgery-team,
+.postop-info{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+/* En tamaños de tablet, se apilan paciente, información adicional y botones.
+   Esto evita la superposición que ocurría en las cirugías. */
+@media(max-width:1400px){
+  .appt-card{
+    grid-template-columns:minmax(0,1fr) !important;
+    align-items:start !important;
+    gap:12px !important;
+  }
+
+  .surgery-team,
+  .postop-info{
+    min-width:0 !important;
+    width:100% !important;
+    border-left:0 !important;
+    border-top:1px solid var(--line) !important;
+    padding:12px 0 0 !important;
+    line-height:1.6 !important;
+  }
+
+  .actions{
+    width:100% !important;
+    justify-content:flex-end !important;
+    padding-top:2px !important;
+  }
+
+  .patient-meta{
+    flex-wrap:wrap !important;
+    row-gap:5px !important;
+  }
+}
+
+/* Ajuste específico para tablet en horizontal */
+@media(max-width:1100px){
+  .week-navigation{
+    grid-template-columns:42px minmax(0,1fr) 42px !important;
+    gap:6px !important;
+  }
+
+  .week-navigation > .week-arrow{
+    min-height:90px !important;
+    font-size:31px !important;
+  }
+
+  .week-navigation > .week-strip{
+    gap:5px !important;
+  }
+
+  .week-navigation .week-day{
+    min-width:0 !important;
+  }
+}
+
+@media(max-width:860px){
+  .week-navigation{
+    grid-template-columns:38px minmax(0,1fr) 38px !important;
+  }
+
+  .week-navigation > .week-strip{
+    overflow-x:auto !important;
+    grid-template-columns:repeat(7,minmax(82px,1fr)) !important;
+    scrollbar-width:thin;
+  }
+
+  .week-navigation > .week-arrow{
+    position:relative;
+    z-index:2;
+  }
+
+  .appointment-row{
+    align-items:start !important;
+  }
+
+  .appt-card{
+    padding:14px !important;
+  }
+
+  .patient-line strong{
+    font-size:20px !important;
+  }
+}

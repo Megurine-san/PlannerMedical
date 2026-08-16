@@ -456,6 +456,20 @@
               <input type="number" id="simplePaymentAmount" min="0" step="0.01" placeholder="Ej. 80.00" />
             </label>
           </div>
+
+          <div id="consultationPaymentDetails" class="hidden">
+            <div class="payment-method-header">
+              <div>
+                <strong>Formas de pago</strong>
+                <p class="section-help">Puedes registrar hasta 2 formas de pago y el estado de cada una.</p>
+              </div>
+              <button type="button" id="addConsultPaymentBtn" class="add-phone-btn">＋ Agregar forma de pago</button>
+            </div>
+            <div id="consultPaymentMethods" class="payment-methods-container"></div>
+            <label class="payment-total-label">Monto total (S/)
+              <input type="number" id="consultPaymentTotal" min="0" step="0.01" readonly />
+            </label>
+          </div>
         </div>
 
         <div id="surgeryFields" class="form-section purple-section hidden">

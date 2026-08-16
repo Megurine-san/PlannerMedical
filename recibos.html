@@ -26,7 +26,7 @@
     .num-box{border:2px solid var(--line);align-self:start}.num-title{background:var(--green);color:#fff;padding:7px;text-align:center;font-size:22px;font-weight:950}.num{padding:13px 12px;color:#b55031;font-family:Georgia,serif;font-size:34px;letter-spacing:.16em;text-align:center;background:#fffaf6}
     .line-row{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:8px;font-weight:800;font-size:18px}.under{border-bottom:1.5px solid var(--line);min-height:31px;padding:0 6px 3px;color:#233d68;font-size:20px;font-weight:600}.triple{display:grid;grid-template-columns:auto 140px auto 230px auto 1fr;align-items:end;gap:6px;font-weight:800;font-size:16px}.concept-title{font-size:17px;font-weight:950;letter-spacing:.04em}.concept-box{border:1.5px solid var(--line);min-height:185px;position:relative}.concept-lines{position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,var(--line) 48px,var(--line) 49px)}.concept-text{position:relative;padding:13px 18px;color:#233d68;font-size:21px;white-space:pre-wrap;line-height:48px}.cancelled{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}.cancelled[hidden]{display:none!important}.cancelled span{font-size:42px;color:#314a85;font-family:cursive;transform:rotate(-20deg);border-bottom:3px solid #314a85;padding:0 26px 4px;opacity:.95}
     .footer{display:grid;grid-template-columns:1fr 440px;gap:20px;align-items:start;padding-bottom:2px}.date-sign{display:grid;grid-template-columns:1fr;gap:58px;padding-top:0}.date-row{display:grid;grid-template-columns:105px repeat(3,120px);align-items:stretch}.date-label{background:var(--green);color:white;font-weight:950;font-size:21px;display:grid;place-items:center}.date-cell{border:1.5px solid var(--line);border-left:0;display:grid;place-items:center;color:#233d68;font-size:24px;min-height:56px}.signature{text-align:center;width:320px;margin-left:130px;border-top:1.5px solid var(--line);padding-top:3px;font-weight:800}.pay-grid{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--line)}.pay-labels{display:grid;grid-template-rows:repeat(3,1fr);font-weight:950;font-size:19px}.pay-labels div{padding:8px 12px;text-align:right}.pay-values{display:grid;grid-template-rows:repeat(3,1fr)}.pay-values div{border-left:1.5px solid var(--line);border-bottom:1.5px solid var(--line);padding:8px 12px;color:#233d68;font-size:21px;min-height:44px}.pay-values div:last-child{border-bottom:0}.keep{font-size:11px;font-weight:800;text-align:center;margin-top:4px;color:#3a4e45;line-height:1.15}
-    .history{margin-top:18px;border-top:1px solid #d7e1dc;padding-top:16px}.history h2{font-size:15px;margin:0 0 9px;color:var(--green)}.hist-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf1ef;font-size:13px}.hist-item button{padding:5px 8px;font-size:11px;border-radius:8px}.empty{font-size:12px;color:var(--muted)}
+    .history{margin-top:18px;border-top:1px solid #d7e1dc;padding-top:16px}.history-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.history h2{font-size:15px;margin:0;color:var(--green)}.history-toggle{padding:8px 10px;font-size:12px;border-radius:9px}.history-panel{margin-top:10px}.history-panel[hidden]{display:none!important}.history-search{margin-bottom:8px;padding:9px 10px;font-size:14px}.history-list{max-height:270px;overflow:auto;border:1px solid #edf1ef;border-radius:10px;padding:0 9px;background:#fbfdfc}.hist-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf1ef;font-size:13px}.hist-item:last-child{border-bottom:0}.hist-item button{padding:5px 8px;font-size:11px;border-radius:8px}.empty{font-size:12px;color:var(--muted);padding:8px 0}
 
     /* v1.14: valores rellenados más legibles también en la vista previa */
     .under{color:#173f78;font-size:23px;font-weight:800}
@@ -164,7 +164,13 @@
       <button class="secondary" id="printBtn">Imprimir / PDF</button>
       <button class="danger" id="clearBtn">Borrar datos</button>
     </div>
-    <div class="history"><h2>Últimos recibos</h2><div id="history"></div></div>
+    <div class="history">
+      <div class="history-head"><h2>Recibos guardados</h2><button class="secondary history-toggle" id="historyToggle" type="button">Ver recibos</button></div>
+      <div class="history-panel" id="historyPanel" hidden>
+        <input class="history-search" id="historySearch" placeholder="Buscar por paciente, DNI o N.º de recibo..." autocomplete="off" />
+        <div class="history-list" id="history"></div>
+      </div>
+    </div>
   </aside>
   <main class="main">
     <div class="toolbar"><div><strong>Vista previa</strong><br><small>Formato pensado para impresión horizontal A5.</small></div><small>Los datos se guardan solo en este dispositivo.</small></div>
@@ -290,12 +296,17 @@ function load(r){
 function loadReceiptNumber(number){const arr=JSON.parse(localStorage.getItem(RECEIPT_STORE)||'[]');const r=arr.find(x=>String(x.number)===String(number));if(r)load(r)}
 function renderHistory(){
   const el=$('history');const arr=JSON.parse(localStorage.getItem(RECEIPT_STORE)||'[]');
-  if(!arr.length){el.innerHTML='<div class="empty">Aún no hay recibos guardados.</div>';return}
-  el.innerHTML=arr.slice(0,12).map((r,i)=>`<div class="hist-item"><span><strong>#${fmtNum(r.number)}</strong><br>${esc(r.name||'Sin nombre')}</span><button class="secondary" data-i="${i}">Abrir</button></div>`).join('');
+  const q=($('historySearch')?.value||'').trim().toLowerCase();
+  const list=arr.map((r,i)=>({r,i})).filter(({r})=>!q||[r.name,r.dni,r.number,r.concept].join(' ').toLowerCase().includes(q));
+  $('historyToggle').textContent=$('historyPanel').hidden?`Ver recibos (${arr.length})`:`Ocultar recibos (${arr.length})`;
+  if(!list.length){el.innerHTML=`<div class="empty">${arr.length?'No se encontraron recibos.':'Aún no hay recibos guardados.'}</div>`;return}
+  el.innerHTML=list.map(({r,i})=>`<div class="hist-item"><span><strong>#${fmtNum(r.number)}</strong><br>${esc(r.name||'Sin nombre')}${r.dni?` · DNI ${esc(r.dni)}`:''}</span><button class="secondary" data-i="${i}">Abrir</button></div>`).join('');
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>load(arr[Number(b.dataset.i)]));
 }
 $('receiptLoadPatientBtn').onclick=()=>{const p=findPatientFromLookup();if(!p){alert('No se encontró ese paciente en la agenda.');return}loadPatient(p)};
 $('receiptPatientLookup').addEventListener('change',()=>{const p=findPatientFromLookup();if(p)loadPatient(p)});
+$('historyToggle').onclick=()=>{$('historyPanel').hidden=!$('historyPanel').hidden;renderHistory()};
+$('historySearch').addEventListener('input',renderHistory);
 $('saveBtn').onclick=save;$('newBtn').onclick=blank;$('printBtn').onclick=()=>window.print();$('clearBtn').onclick=()=>{if(confirm('¿Borrar los datos actuales del formulario?'))blank()};
 window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();window.print()}});
 window.addEventListener('message',e=>{

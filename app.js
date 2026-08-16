@@ -198,6 +198,78 @@ function updatePostOpCustomField(){
   }
 }
 
+function samePatientAppointment(a,p){
+  if(!a || !p || a.type==="enma") return false;
+  if(a.patientId && p.id && a.patientId===p.id) return true;
+  const pdni=String(p.dni||"").trim().toLowerCase();
+  const adni=String(a.dni||"").trim().toLowerCase();
+  if(pdni && adni && pdni===adni) return true;
+  const pname=String(p.name||"").trim().toLowerCase();
+  const aname=String(a.name||"").trim().toLowerCase();
+  return !!pname && pname===aname;
+}
+
+function calendarPostOpDifference(startDate,endDate){
+  const start=new Date(startDate+"T12:00:00");
+  const end=new Date(endDate+"T12:00:00");
+  if(Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end<start) return "";
+
+  let cursor=new Date(start);
+  let years=0,months=0;
+
+  function addCalendarMonths(date,count){
+    const d=new Date(date);
+    const originalDay=d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth()+count);
+    const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    d.setDate(Math.min(originalDay,lastDay));
+    return d;
+  }
+
+  while(true){
+    const next=addCalendarMonths(cursor,12);
+    if(next<=end){cursor=next;years++;}else break;
+  }
+  while(true){
+    const next=addCalendarMonths(cursor,1);
+    if(next<=end){cursor=next;months++;}else break;
+  }
+
+  const days=Math.round((end-cursor)/(24*60*60*1000));
+  const parts=[];
+  if(years) parts.push(`${years} ${years===1?"año":"años"}`);
+  if(months) parts.push(`${months} ${months===1?"mes":"meses"}`);
+  if(days || !parts.length) parts.push(`${days} ${days===1?"día":"días"}`);
+  return parts.join(" ");
+}
+
+function autoFillPostOpTime(){
+  if($("type").value!=="control") return false;
+  const controlDate=$("formDate").value;
+  if(!controlDate) return false;
+
+  const name=$("name").value.trim();
+  const dni=$("dni").value.trim();
+  const p=patients.find(x=>(dni&&x.dni===dni)||(name&&x.name.toLowerCase()===name.toLowerCase()));
+  if(!p) return false;
+
+  const surgeries=appointments
+    .filter(a=>a.type==="cirugia" && a.date && a.date<=controlDate && samePatientAppointment(a,p))
+    .sort((a,b)=>(b.date+(b.time||"")).localeCompare(a.date+(a.time||"")));
+  if(!surgeries.length) return false;
+
+  const text=calendarPostOpDifference(surgeries[0].date,controlDate);
+  if(!text) return false;
+
+  // Usamos el campo personalizado existente para poder expresar combinaciones
+  // naturales como "1 mes 7 días", sin alterar el guardado actual.
+  $("postOpUnit").value="personalizado";
+  updatePostOpCustomField();
+  $("postOpCustom").value=text;
+  return true;
+}
+
 function postOpDisplay(a){
   // Compatibilidad con datos antiguos: postOpDays se interpreta como días.
   if(a.postOpCustom && String(a.postOpCustom).trim()){
@@ -265,6 +337,40 @@ function normalizePatients(){
 }
 normalizePatients();
 
+function syncPatientsFromReceipts(){
+  const receipts=getReceipts();
+  let changed=false;
+  receipts.forEach(r=>{
+    const name=String(r.name||"").trim();
+    const dni=String(r.dni||"").trim();
+    if(!name)return;
+    let p=patients.find(x=>(r.patientId&&x.id===r.patientId)||(dni&&x.dni===dni)||((x.name||"").trim().toLowerCase()===name.toLowerCase()));
+    const phone=String(r.phone||"").trim();
+    if(!p){
+      p={id:r.patientId||newLocalId(),name,age:r.age||"",dni,phone,phones:phone?[{owner:"Paciente",number:phone}]:[]};
+      patients.push(p);changed=true;
+    }else{
+      if(!p.name&&name){p.name=name;changed=true}
+      if(!p.age&&r.age){p.age=r.age;changed=true}
+      if(!p.dni&&dni){p.dni=dni;changed=true}
+      const phones=normalizePhones(p.phones,p.phone);
+      if(phone&&!phones.some(x=>x.number===phone)){phones.unshift({owner:"Paciente",number:phone});p.phones=phones;p.phone=p.phone||phone;changed=true}
+    }
+    if(!r.patientId&&p.id){r.patientId=p.id;changed=true}
+  });
+  if(changed){
+    localStorage.setItem(PATIENT_STORE,JSON.stringify(patients));
+    localStorage.setItem(RECEIPT_STORE,JSON.stringify(receipts));
+  }
+}
+syncPatientsFromReceipts();
+
+function reloadPatientsFromStorage(){
+  try{patients=JSON.parse(localStorage.getItem(PATIENT_STORE)||"[]")}catch{patients=[]}
+  patients.forEach(p=>{if(!Array.isArray(p.phones))p.phones=normalizePhones([],p.phone);if(!p.phone&&p.phones.length)p.phone=p.phones[0].number});
+  refreshPatientDatalist();
+}
+
 function linkLegacyAppointmentsToPatients(){
   let changed=false;
   appointments.forEach(a=>{
@@ -300,7 +406,10 @@ function upsertPatientFromForm(){
 }
 
 function refreshPatientDatalist(){
-  $("patientDatalist").innerHTML=patients.map(p=>`<option value="${esc(p.name)} — ${esc(p.dni||"sin DNI")}"></option>`).join("");
+  $("patientDatalist").innerHTML=patients
+    .filter(p=>String(p.name||"").trim() || String(p.dni||"").trim())
+    .map(p=>`<option value="${esc((p.name||"").trim()||"Paciente")} — ${esc(p.dni||"sin DNI")}"></option>`)
+    .join("");
 }
 
 function normalizePhones(rawPhones, legacyPhone){
@@ -359,6 +468,107 @@ function getPhoneRows(){
     .filter(p=>p.number);
 }
 
+function normalizeConsultPaymentMethods(rawMethods, legacyAmount){
+  if(Array.isArray(rawMethods) && rawMethods.length){
+    return rawMethods.slice(0,2).map(m=>({
+      type:m.type||"",
+      other:(m.other||"").trim(),
+      amount:String(m.amount??""),
+      status:m.status==="pendiente"?"pendiente":"pagado"
+    }));
+  }
+  if(legacyAmount!==undefined && legacyAmount!==null && String(legacyAmount)!==""){
+    return [{type:"",other:"",amount:String(legacyAmount),status:"pagado"}];
+  }
+  return [];
+}
+
+function addConsultPaymentRow(method={type:"EN EFECTIVO",other:"",amount:"",status:"pagado"}){
+  const container=$("consultPaymentMethods");
+  if(!container || container.querySelectorAll(".consult-payment-row").length>=2)return;
+  const row=document.createElement("div");
+  row.className="consult-payment-row";
+  row.innerHTML=`
+    <label>Tipo de pago
+      <select class="consult-payment-type">
+        <option value="">SELECCIONAR...</option>
+        <option value="EN EFECTIVO">EN EFECTIVO</option>
+        <option value="YAPE">YAPE</option>
+        <option value="OTRO">OTRO</option>
+      </select>
+    </label>
+    <label>Monto (S/)
+      <input type="number" class="consult-payment-amount" min="0" step="0.01" placeholder="Ej. 50.00" />
+    </label>
+    <label>Estado
+      <select class="consult-payment-state">
+        <option value="pagado">YA PAGADO</option>
+        <option value="pendiente">PENDIENTE</option>
+      </select>
+    </label>
+    <button type="button" class="remove-consult-payment-btn" title="Quitar forma de pago">×</button>
+    <label class="consult-payment-other-wrap hidden">Especificar otro tipo de pago
+      <input type="text" class="consult-payment-other" placeholder="Ej. Transferencia bancaria" />
+    </label>`;
+  row.querySelector(".consult-payment-type").value=method.type||"";
+  row.querySelector(".consult-payment-amount").value=method.amount??"";
+  row.querySelector(".consult-payment-state").value=method.status==="pendiente"?"pendiente":"pagado";
+  row.querySelector(".consult-payment-other").value=method.other||"";
+  const syncOther=()=>row.querySelector(".consult-payment-other-wrap").classList.toggle("hidden",row.querySelector(".consult-payment-type").value!=="OTRO");
+  row.querySelector(".consult-payment-type").onchange=syncOther;
+  row.querySelector(".consult-payment-amount").oninput=updateConsultPaymentTotal;
+  row.querySelector(".remove-consult-payment-btn").onclick=()=>{
+    row.remove();
+    if(!container.querySelector(".consult-payment-row"))addConsultPaymentRow();
+    updateConsultPaymentTotal();
+    updateConsultPaymentAddButton();
+  };
+  container.appendChild(row);
+  syncOther();
+  updateConsultPaymentTotal();
+  updateConsultPaymentAddButton();
+}
+
+function setConsultPaymentRows(methods=[], legacyAmount=""){
+  const container=$("consultPaymentMethods");
+  if(!container)return;
+  container.innerHTML="";
+  const normalized=normalizeConsultPaymentMethods(methods,legacyAmount);
+  if(normalized.length)normalized.forEach(addConsultPaymentRow);
+  else addConsultPaymentRow();
+  updateConsultPaymentTotal();
+  updateConsultPaymentAddButton();
+}
+
+function getConsultPaymentRows(){
+  const container=$("consultPaymentMethods");
+  if(!container)return [];
+  return [...container.querySelectorAll(".consult-payment-row")].map(row=>({
+    type:row.querySelector(".consult-payment-type").value,
+    other:row.querySelector(".consult-payment-type").value==="OTRO"?row.querySelector(".consult-payment-other").value.trim():"",
+    amount:row.querySelector(".consult-payment-amount").value,
+    status:row.querySelector(".consult-payment-state").value
+  })).filter(m=>m.type || m.other || String(m.amount)!=="");
+}
+
+function updateConsultPaymentTotal(){
+  const total=getConsultPaymentRows().reduce((sum,m)=>sum+Number(m.amount||0),0);
+  if($("consultPaymentTotal"))$("consultPaymentTotal").value=total?total.toFixed(2):"";
+  if($("simplePaymentAmount") && $("type").value==="consulta")$("simplePaymentAmount").value=total?total.toFixed(2):"";
+}
+
+function updateConsultPaymentAddButton(){
+  const btn=$("addConsultPaymentBtn"),container=$("consultPaymentMethods");
+  if(!btn||!container)return;
+  btn.classList.toggle("hidden",container.querySelectorAll(".consult-payment-row").length>=2);
+}
+
+function consultPaymentMethodDisplay(m){
+  const type=m.type==="OTRO"?(m.other||"OTRO"):(m.type||"NO ESPECIFICADO");
+  const state=m.status==="pendiente"?"PENDIENTE":"YA PAGADO";
+  return `${type}: S/ ${money(Number(m.amount||0))} · ${state}`;
+}
+
 function phonesDisplay(phones, legacyPhone){
   const list=normalizePhones(phones,legacyPhone);
   return list.length
@@ -371,9 +581,11 @@ function loadPatientFromLookup(showAlert=true){
   if(!val)return false;
 
   let p=patients.find(x=>{
-    const name=(x.name||"").toLowerCase();
-    const dni=(x.dni||"").toLowerCase();
-    return val===`${name} — ${dni}` || val.includes(name) || (dni && val.includes(dni));
+    const name=(x.name||"").trim().toLowerCase();
+    const dni=(x.dni||"").trim().toLowerCase();
+    if(!name && !dni) return false;
+    const display=`${name} — ${dni||"sin dni"}`;
+    return val===display || (dni && val.includes(dni)) || (name && val.startsWith(name));
   });
 
   if(!p){
@@ -389,6 +601,7 @@ function loadPatientFromLookup(showAlert=true){
 
   // Conserva la selección visible para que sea claro qué paciente se cargó.
   $("patientLookup").value=`${p.name} — ${p.dni||"sin DNI"}`;
+  autoFillPostOpTime();
   return true;
 }
 function clearPatientFields(){
@@ -536,6 +749,13 @@ function paymentText(a){
     return {pill:"Gratis",detail:"",balance:0};
   }
   const amount=Number(a.simplePaymentAmount||0);
+  if(a.type==="consulta"){
+    const methods=normalizeConsultPaymentMethods(a.consultPaymentMethods,a.simplePaymentAmount);
+    const total=methods.length?methods.reduce((sum,m)=>sum+Number(m.amount||0),0):amount;
+    const pending=methods.reduce((sum,m)=>sum+(m.status==="pendiente"?Number(m.amount||0):0),0);
+    const detail=methods.map(consultPaymentMethodDisplay).join(" · ");
+    return {pill:pending>0?`Pendiente · S/ ${money(pending)}`:(total>0?`Pagada · S/ ${money(total)}`:"Pagada"),detail,balance:pending};
+  }
   return {pill:amount>0?`Pagada · S/ ${money(amount)}`:"Pagada",detail:"",balance:0};
 }
 
@@ -546,6 +766,8 @@ function renderTimeline(list){
     let extra="";
     if(a.type==="cirugia"){
       extra=`<div class="surgery-team"><b>EQUIPO QUIRÚRGICO</b><br>👤 Cirujano 1: ${esc(a.surgeon1||"—")}<br>👤 Cirujano 2: ${esc(a.surgeon2||"—")}<br>👤 Anestesiólogo: ${esc(a.anesthesiologist||"—")}<br>👤 Instrumentista: ${esc(a.instrumentist||"—")}<div class="surgery-payment"><b>${esc(surgeryChargeTypeLabel(a.surgeryChargeType||"normal"))}</b></div><div class="surgery-payment ${pay.balance>0?"balance-due":"paid-full"}">${esc(pay.detail)}</div></div>`;
+    } else if(a.type==="consulta" && pay.detail){
+      extra=`<div class="postop-info"><strong>Detalle de pago</strong><span>${esc(pay.detail)}</span></div>`;
     } else if(a.type==="control"){
       const reason=(a.controlReason==="Otro"&&a.controlReasonOther)?`Otro: ${a.controlReasonOther}`:(a.controlReason||"Control");
       extra=`<div class="postop-info"><strong>${esc(postOpDisplay(a))} post cirugía</strong><span>${esc(reason)}</span></div>`;
@@ -902,12 +1124,23 @@ function updateFields(){
   updateEnmaActivityFields();
   updateSimplePaymentAmountField();
   updatePaymentSummary();
+
+  // Si se cambia el tipo a CONTROL después de haber cargado al paciente,
+  // intenta calcular automáticamente el tiempo desde su última cirugía.
+  if(t==="control" && !$("editId").value) autoFillPostOpTime();
 }
 
 function updateSimplePaymentAmountField(){
   const isPaid=$("simplePaymentStatus").value==="pagada";
-  $("simplePaymentAmountField").classList.toggle("hidden",!isPaid);
-  if(!isPaid)$("simplePaymentAmount").value="";
+  const isConsult=$("type").value==="consulta";
+  $("simplePaymentAmountField").classList.toggle("hidden",!isPaid || isConsult);
+  $("consultationPaymentDetails")?.classList.toggle("hidden",!isPaid || !isConsult);
+  if(!isPaid){
+    $("simplePaymentAmount").value="";
+    if($("consultPaymentTotal"))$("consultPaymentTotal").value="";
+  }else if(isConsult){
+    updateConsultPaymentTotal();
+  }
 }
 
 function updatePaymentSummary(){
@@ -928,6 +1161,7 @@ function openNew(){
   $("source").value="Facebook";
   $("sourceOther").value="";
   $("simplePaymentStatus").value="pagada";$("simplePaymentAmount").value="";
+  setConsultPaymentRows();
   $("postOpValue").value="";
   $("postOpUnit").value="dias";
   $("postOpCustom").value="";
@@ -973,6 +1207,7 @@ function editAppointment(id){
   $("dni").value=a.dni||"";
   setPhoneRows(a.phones,a.phone||"");
   $("simplePaymentStatus").value=a.simplePaymentStatus||"pagada";$("simplePaymentAmount").value=a.simplePaymentAmount||"";
+  setConsultPaymentRows(a.consultPaymentMethods,a.simplePaymentAmount||"");
   $("surgeryName").value=a.surgeryName||"";
   $("surgeryAmount").value=a.surgeryAmount||"";
   $("surgeryPaid").value=a.surgeryPaid||"";
@@ -1041,8 +1276,12 @@ $("surgeon2").onchange=updateSurgeryTeamOtherFields;
 $("anesthesiologist").onchange=updateSurgeryTeamOtherFields;
 $("instrumentist").onchange=updateSurgeryTeamOtherFields;
 $("addPhoneBtn").onclick=()=>addPhoneRow("","",true);
+if($("addConsultPaymentBtn"))$("addConsultPaymentBtn").onclick=()=>addConsultPaymentRow();
 $("loadPatientBtn").onclick=()=>loadPatientFromLookup(true);
 $("clearPatientBtn").onclick=clearPatientFields;
+$("formDate").addEventListener("change",()=>{
+  if(!$("editId").value) autoFillPostOpTime();
+});
 
 // Al elegir un paciente guardado, sus datos se cargan automáticamente.
 // No hace falta presionar "Cargar paciente".
@@ -1086,6 +1325,15 @@ function saveActivityFromForm(){
       $("enmaOtherActivity").focus();
       return;
     }
+    if(type==="consulta" && $("simplePaymentStatus").value==="pagada"){
+      const paymentRows=[...$("consultPaymentMethods").querySelectorAll(".consult-payment-row")];
+      const incompleteOther=paymentRows.find(row=>row.querySelector(".consult-payment-type").value==="OTRO" && !row.querySelector(".consult-payment-other").value.trim());
+      if(incompleteOther){
+        if(feedback){feedback.textContent="Especifica el tipo de pago en OTRO.";feedback.classList.add("error");}
+        incompleteOther.querySelector(".consult-payment-other").focus();
+        return;
+      }
+    }
 
     const patient=isEnma?null:upsertPatientFromForm();
     const id=$("editId").value||newLocalId();
@@ -1115,6 +1363,7 @@ function saveActivityFromForm(){
       enmaOtherActivity:isEnma&&$("enmaActivityType").value==="otro"?$("enmaOtherActivity").value.trim():"",
       simplePaymentStatus:$("simplePaymentStatus").value,
       simplePaymentAmount:$("simplePaymentStatus").value==="pagada"?$("simplePaymentAmount").value:"",
+      consultPaymentMethods:(type==="consulta" && $("simplePaymentStatus").value==="pagada")?getConsultPaymentRows():[],
       surgeryName:$("surgeryName").value.trim(),
       surgeryAmount:$("surgeryAmount").value,
       surgeryPaid:$("surgeryPaid").value,
@@ -1188,8 +1437,16 @@ function switchView(name){
   }
 }
 document.querySelectorAll(".nav-btn").forEach(n=>n.onclick=()=>switchView(n.dataset.view));
-window.addEventListener("message",e=>{if(e.data?.type==="masvida-receipts-updated"&&$("pacientesView")?.classList.contains("active-view"))renderPatients()});
-window.addEventListener("storage",e=>{if(e.key===RECEIPT_STORE&&$("pacientesView")?.classList.contains("active-view"))renderPatients()});
+window.addEventListener("message",e=>{
+  if(e.data?.type==="masvida-receipts-updated"){
+    reloadPatientsFromStorage();
+    if($("pacientesView")?.classList.contains("active-view"))renderPatients();
+  }
+});
+window.addEventListener("storage",e=>{
+  if(e.key===PATIENT_STORE){reloadPatientsFromStorage();if($("pacientesView")?.classList.contains("active-view"))renderPatients()}
+  if(e.key===RECEIPT_STORE&&$("pacientesView")?.classList.contains("active-view"))renderPatients();
+});
 
 $("searchBtn").onclick=()=>{$("searchOverlay").classList.remove("hidden");$("globalSearch").focus();renderGlobal()};
 $("closeSearch").onclick=()=>$("searchOverlay").classList.add("hidden");

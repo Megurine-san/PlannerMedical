@@ -141,18 +141,18 @@ main{max-width:1500px;margin:auto;padding:14px 34px 40px}.layout{display:grid;gr
 }
 
 .summary-six{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}
-.summary-card.postcirugia,.legend-card.postcirugia{border-color:rgba(85,199,184,.45)!important}
-.summary-card.postcirugia span,.summary-card.postcirugia strong,.summary-card.postcirugia .summary-icon,.legend-card.postcirugia strong,.legend-card.postcirugia .legend-icon{color:#55c7b8!important}
-.summary-card.muestra,.legend-card.muestra{border-color:rgba(105,174,232,.45)!important}
-.summary-card.muestra span,.summary-card.muestra strong,.summary-card.muestra .summary-icon,.legend-card.muestra strong,.legend-card.muestra .legend-icon{color:#69aee8!important}
-.summary-card.laboratorio,.legend-card.laboratorio{border-color:rgba(226,154,97,.45)!important}
-.summary-card.laboratorio span,.summary-card.laboratorio strong,.summary-card.laboratorio .summary-icon,.legend-card.laboratorio strong,.legend-card.laboratorio .legend-icon{color:#e29a61!important}
-.appointment-card.postcirugia,.timeline-card.postcirugia{border-left-color:#55c7b8!important}
-.appointment-card.muestra,.timeline-card.muestra{border-left-color:#69aee8!important}
-.appointment-card.laboratorio,.timeline-card.laboratorio{border-left-color:#e29a61!important}
-.attendance-type.postcirugia{color:#55c7b8!important;border-color:rgba(85,199,184,.4)!important}
-.attendance-type.muestra{color:#69aee8!important;border-color:rgba(105,174,232,.4)!important}
-.attendance-type.laboratorio{color:#e29a61!important;border-color:rgba(226,154,97,.4)!important}
+.summary-card.postcirugia,.legend-card.postcirugia{border-color:rgba(56,199,180,.45)!important}
+.summary-card.postcirugia span,.summary-card.postcirugia strong,.summary-card.postcirugia .summary-icon,.legend-card.postcirugia strong,.legend-card.postcirugia .legend-icon{color:#38c7b4!important}
+.summary-card.muestra,.legend-card.muestra{border-color:rgba(90,169,255,.45)!important}
+.summary-card.muestra span,.summary-card.muestra strong,.summary-card.muestra .summary-icon,.legend-card.muestra strong,.legend-card.muestra .legend-icon{color:#5aa9ff!important}
+.summary-card.laboratorio,.legend-card.laboratorio{border-color:rgba(255,95,109,.45)!important}
+.summary-card.laboratorio span,.summary-card.laboratorio strong,.summary-card.laboratorio .summary-icon,.legend-card.laboratorio strong,.legend-card.laboratorio .legend-icon{color:#ff5f6d!important}
+.appointment-card.postcirugia,.timeline-card.postcirugia{border-left-color:#38c7b4!important}
+.appointment-card.muestra,.timeline-card.muestra{border-left-color:#5aa9ff!important}
+.appointment-card.laboratorio,.timeline-card.laboratorio{border-left-color:#ff5f6d!important}
+.attendance-type.postcirugia{color:#38c7b4!important;border-color:rgba(85,199,184,.4)!important}
+.attendance-type.muestra{color:#5aa9ff!important;border-color:rgba(105,174,232,.4)!important}
+.attendance-type.laboratorio{color:#ff5f6d!important;border-color:rgba(226,154,97,.4)!important}
 @media(max-width:700px){.summary-six{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 
 .time-picker-selects{display:grid;grid-template-columns:minmax(76px,1fr) auto minmax(76px,1fr) minmax(78px,.85fr);align-items:center;gap:8px}
@@ -774,3 +774,72 @@ main{max-width:1500px;margin:auto;padding:14px 34px 40px}.layout{display:grid;gr
     font-size:20px !important;
   }
 }
+
+
+/* v5.26 — Recibos integrados */
+.receipts-view{padding:0!important;overflow:hidden!important}
+.receipts-view-head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:0 0 14px}
+.receipts-view-head h2{margin:0;color:var(--cream);font-size:28px}
+.receipts-view-head p{margin:5px 0 0;color:var(--muted)}
+.receipts-frame{display:block;width:100%;height:calc(100vh - 175px);min-height:720px;border:1px solid var(--line);border-radius:18px;background:#eef3f0}
+.patient-receipts{margin-top:14px;padding:12px 14px;border:1px solid rgba(83,177,139,.22);border-radius:12px;background:rgba(8,62,57,.25)}
+.patient-receipts-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.patient-receipts-head b{color:#a9ead1}
+.patient-receipts-head span{font-size:12px;color:var(--muted)}
+.patient-receipt-row{display:grid;grid-template-columns:100px 92px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid rgba(255,255,255,.07);font-size:12px}
+.patient-receipt-row strong{color:#d9f6ea}
+.patient-receipt-row button,.emit-receipt-btn{border:1px solid rgba(91,201,156,.45);background:rgba(91,201,156,.12);color:#bff5df;border-radius:9px;padding:7px 10px;font-weight:800;cursor:pointer}
+.emit-receipt-btn{margin-top:10px}
+@media(max-width:900px){.receipts-frame{min-height:780px;height:calc(100vh - 145px)}.patient-receipt-row{grid-template-columns:1fr 1fr}.patient-receipt-row span:nth-child(3){grid-column:1/-1}}
+
+/* CIRUGÍA PENDIENTE: usa el mismo formulario simple de CONSULTA, con identidad visual propia. */
+.appt-card.cirugia_pendiente{border-left-color:#ff8a5b}
+.appt-card.cirugia_pendiente .type-pill{color:#ff9d78;border-color:rgba(255,138,91,.34);background:rgba(255,138,91,.08)}
+.cirugia_pendiente .edit-btn{color:#ff9d78;border-color:rgba(255,138,91,.5)}
+.attendance-type.cirugia_pendiente{color:#ff9d78;border-color:rgba(255,138,91,.34)}
+
+/* Resumen diario: CIRUGÍA PENDIENTE visible junto a las demás categorías */
+@media (min-width: 900px){.summary-row.summary-six{grid-template-columns:repeat(4,minmax(0,1fr));}}
+.summary-card.pending-surgery{border-color:rgba(255,138,91,.52)!important;color:#ff9d78!important}
+.summary-card.pending-surgery span,.summary-card.pending-surgery strong,.summary-card.pending-surgery .summary-icon{color:#ff9d78!important}
+
+/* v5.30 — Las actividades guardadas usan exactamente los colores del resumen diario */
+.appt-card.consulta{border-left-color:#e2b72f!important}
+.appt-card.consulta .type-pill{color:#e2b72f!important;border-color:rgba(226,183,47,.48)!important;background:rgba(226,183,47,.08)!important}
+.appt-card.consulta .edit-btn{color:#e2b72f!important;border-color:rgba(226,183,47,.55)!important}
+
+.appt-card.cirugia{border-left-color:#c65ddd!important}
+.appt-card.cirugia .type-pill{color:#c65ddd!important;border-color:rgba(198,93,221,.48)!important;background:rgba(198,93,221,.08)!important}
+.appt-card.cirugia .edit-btn{color:#c65ddd!important;border-color:rgba(198,93,221,.55)!important}
+
+.appt-card.cirugia_pendiente{border-left-color:#ff8a5b!important}
+.appt-card.cirugia_pendiente .type-pill{color:#ff8a5b!important;border-color:rgba(255,138,91,.48)!important;background:rgba(255,138,91,.08)!important}
+.appt-card.cirugia_pendiente .edit-btn{color:#ff8a5b!important;border-color:rgba(255,138,91,.55)!important}
+
+.appt-card.control{border-left-color:#75cf68!important}
+.appt-card.control .type-pill{color:#75cf68!important;border-color:rgba(117,207,104,.48)!important;background:rgba(117,207,104,.08)!important}
+.appt-card.control .edit-btn{color:#75cf68!important;border-color:rgba(117,207,104,.55)!important}
+
+.appt-card.postcirugia{border-left-color:#38c7b4!important}
+.appt-card.postcirugia .type-pill{color:#38c7b4!important;border-color:rgba(56,199,180,.48)!important;background:rgba(56,199,180,.08)!important}
+.appt-card.postcirugia .edit-btn{color:#38c7b4!important;border-color:rgba(56,199,180,.55)!important}
+
+.appt-card.muestra{border-left-color:#5aa9ff!important}
+.appt-card.muestra .type-pill{color:#5aa9ff!important;border-color:rgba(90,169,255,.48)!important;background:rgba(90,169,255,.08)!important}
+.appt-card.muestra .edit-btn{color:#5aa9ff!important;border-color:rgba(90,169,255,.55)!important}
+
+.appt-card.laboratorio{border-left-color:#ff5f6d!important}
+.appt-card.laboratorio .type-pill{color:#ff5f6d!important;border-color:rgba(255,95,109,.48)!important;background:rgba(255,95,109,.08)!important}
+.appt-card.laboratorio .edit-btn{color:#ff5f6d!important;border-color:rgba(255,95,109,.55)!important}
+
+/* v5.31 - Actividades personales de Enma */
+.summary-card.enma{border-color:rgba(183,146,255,.52)!important;color:#b792ff!important}
+.summary-card.enma span,.summary-card.enma strong,.summary-card.enma .summary-icon{color:#b792ff!important}
+.appt-card.enma{border-left-color:#b792ff!important}
+.appt-card.enma .type-pill{color:#b792ff!important;border-color:rgba(183,146,255,.5)!important;background:rgba(183,146,255,.09)!important}
+.appt-card.enma .edit-btn{color:#b792ff!important;border-color:rgba(183,146,255,.58)!important}
+.enma-section{border-color:rgba(183,146,255,.38)!important;background:rgba(183,146,255,.055)!important}
+.enma-section h3{color:#c9adff!important}
+.enma-detail-group{margin-top:14px;padding:14px;border:1px solid rgba(183,146,255,.22);border-radius:14px;background:rgba(3,34,33,.35)}
+.enma-summary strong{color:#cfb8ff!important}
+.enma-title strong{color:#cfb8ff!important}

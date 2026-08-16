@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Más Vida · Recibos de Ingreso</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f5b3f" />
+  <style>
+    :root{--green:#0f5b3f;--green2:#1f7a57;--ink:#1f2937;--muted:#6b7280;--paper:#fbfaf4;--line:#2f5d4a;--bg:#eef3f0;--danger:#b42318}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    .app{min-height:100vh;display:grid;grid-template-columns:380px 1fr}
+    .sidebar{padding:24px;background:#fff;border-right:1px solid #d7e1dc;overflow:auto}
+    h1{margin:0 0 4px;font-size:24px;color:var(--green)} .sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin:0 0 12px}.field.full{grid-column:1/-1}
+    label{display:block;font-size:12px;font-weight:800;letter-spacing:.03em;color:#3b4b44;margin-bottom:6px;text-transform:uppercase}
+    input,textarea,select{width:100%;border:1.5px solid #b9c9c1;border-radius:12px;padding:12px 13px;font-size:16px;background:#fff;outline:none;transition:.15s}
+    input:focus,textarea:focus,select:focus{border-color:var(--green2);box-shadow:0 0 0 3px #1f7a5722} textarea{min-height:92px;resize:vertical}
+    .money{font-variant-numeric:tabular-nums}.row{display:flex;gap:10px;align-items:center}.switch{display:flex;align-items:center;gap:10px;margin:8px 0 16px;font-weight:700}.switch input{width:20px;height:20px}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:sticky;bottom:0;padding-top:14px;background:linear-gradient(transparent,#fff 22%)}
+    button{border:0;border-radius:12px;padding:13px 14px;font-size:15px;font-weight:800;cursor:pointer}.primary{background:var(--green);color:#fff}.secondary{background:#e8f1ed;color:var(--green)}.danger{background:#fff0ee;color:var(--danger)}
+    .main{padding:28px;overflow:auto}.toolbar{max-width:1040px;margin:0 auto 14px;display:flex;justify-content:space-between;gap:12px;align-items:center}.toolbar small{color:var(--muted)}
+    .receipt-wrap{max-width:1040px;margin:auto}.receipt{background:var(--paper);border:2px solid var(--line);border-radius:28px;padding:20px 24px 18px;box-shadow:0 18px 60px #214f3b18;aspect-ratio:auto;min-height:650px;display:grid;grid-template-rows:auto auto auto minmax(185px,1fr) auto;gap:6px;color:#244a3c}
+    .header{display:grid;grid-template-columns:125px 1fr 245px;align-items:start;gap:12px}.logo{height:95px;display:grid;place-items:center;font-size:58px;color:var(--green)}
+    .brand{text-align:center}.brand .top{font-weight:900;letter-spacing:.04em;font-size:21px}.brand .name{font-size:45px;line-height:1;font-weight:950;letter-spacing:.03em}.brand .addr{font-weight:700;font-size:17px;line-height:1.25;margin-top:5px}
+    .num-box{border:2px solid var(--line);align-self:start}.num-title{background:var(--green);color:#fff;padding:7px;text-align:center;font-size:22px;font-weight:950}.num{padding:13px 12px;color:#b55031;font-family:Georgia,serif;font-size:34px;letter-spacing:.16em;text-align:center;background:#fffaf6}
+    .line-row{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:8px;font-weight:800;font-size:18px}.under{border-bottom:1.5px solid var(--line);min-height:31px;padding:0 6px 3px;color:#233d68;font-size:20px;font-weight:600}.triple{display:grid;grid-template-columns:auto 140px auto 230px auto 1fr;align-items:end;gap:6px;font-weight:800;font-size:16px}.concept-title{font-size:17px;font-weight:950;letter-spacing:.04em}.concept-box{border:1.5px solid var(--line);min-height:185px;position:relative}.concept-lines{position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,var(--line) 48px,var(--line) 49px)}.concept-text{position:relative;padding:13px 18px;color:#233d68;font-size:21px;white-space:pre-wrap;line-height:48px}.cancelled{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}.cancelled[hidden]{display:none!important}.cancelled span{font-size:42px;color:#314a85;font-family:cursive;transform:rotate(-20deg);border-bottom:3px solid #314a85;padding:0 26px 4px;opacity:.95}
+    .footer{display:grid;grid-template-columns:1fr 440px;gap:20px;align-items:start;padding-bottom:2px}.date-sign{display:grid;grid-template-columns:1fr;gap:58px;padding-top:0}.date-row{display:grid;grid-template-columns:105px repeat(3,120px);align-items:stretch}.date-label{background:var(--green);color:white;font-weight:950;font-size:21px;display:grid;place-items:center}.date-cell{border:1.5px solid var(--line);border-left:0;display:grid;place-items:center;color:#233d68;font-size:24px;min-height:56px}.signature{text-align:center;width:320px;margin-left:130px;border-top:1.5px solid var(--line);padding-top:3px;font-weight:800}.pay-grid{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--line)}.pay-labels{display:grid;grid-template-rows:repeat(3,1fr);font-weight:950;font-size:19px}.pay-labels div{padding:8px 12px;text-align:right}.pay-values{display:grid;grid-template-rows:repeat(3,1fr)}.pay-values div{border-left:1.5px solid var(--line);border-bottom:1.5px solid var(--line);padding:8px 12px;color:#233d68;font-size:21px;min-height:44px}.pay-values div:last-child{border-bottom:0}.keep{font-size:11px;font-weight:800;text-align:center;margin-top:4px;color:#3a4e45;line-height:1.15}
+    .history{margin-top:18px;border-top:1px solid #d7e1dc;padding-top:16px}.history h2{font-size:15px;margin:0 0 9px;color:var(--green)}.hist-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf1ef;font-size:13px}.hist-item button{padding:5px 8px;font-size:11px;border-radius:8px}.empty{font-size:12px;color:var(--muted)}
+
+    /* v1.14: valores rellenados más legibles también en la vista previa */
+    .under{color:#173f78;font-size:23px;font-weight:800}
+    .concept-text{color:#173f78;font-size:24px;font-weight:800}
+    .pay-values div{color:#173f78;font-size:23px;font-weight:800}
+    .date-cell{color:#173f78;font-weight:800}
+    .cancelled span{font-size:50px;color:#1676a8;border-bottom-color:#1676a8;font-family:Arial,sans-serif;font-weight:900;transform:rotate(-16deg)}
+    @media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid #d7e1dc}.receipt{min-width:900px}.main{overflow:auto}.toolbar{min-width:900px}.header{grid-template-columns:95px 1fr 215px}.brand .name{font-size:37px}}
+    @media print{
+      @page{size:A5 landscape;margin:4mm}
+      html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important}
+      .sidebar,.toolbar{display:none!important}
+      .app,.main{display:block!important;margin:0!important;padding:0!important;width:auto!important;height:auto!important;overflow:visible!important}
+      .receipt-wrap{position:relative!important;width:202mm!important;height:140mm!important;max-width:none!important;margin:0!important;padding:0!important;overflow:visible!important}
+
+      /* Recibo más angosto, sin comprimir la altura útil */
+      .receipt{position:absolute!important;left:1mm!important;top:1mm!important;width:200mm!important;height:138mm!important;min-height:0!important;margin:0!important;padding:0!important;border:.45mm solid var(--line)!important;border-radius:4mm!important;box-shadow:none!important;display:block!important;overflow:hidden!important;page-break-inside:avoid!important;break-inside:avoid!important}
+
+      .header{position:absolute!important;left:6mm!important;right:6mm!important;top:4mm!important;height:31mm!important;display:grid!important;grid-template-columns:12mm 1fr 45mm!important;gap:2mm!important;align-items:start!important}
+      .logo{height:28mm!important;font-size:12mm!important;align-items:center!important}
+      .brand .top{font-size:5.2mm!important;line-height:1.04!important;white-space:nowrap!important}
+      .brand .name{font-size:9.5mm!important;line-height:.95!important}
+      .brand .addr{font-size:4.25mm!important;line-height:1.08!important;margin-top:.7mm!important}
+      .num-box{height:28mm!important;overflow:hidden!important}
+      .num-title{font-size:4.3mm!important;line-height:1!important;padding:1.35mm .5mm!important;white-space:nowrap!important}
+      .num{font-size:7mm!important;line-height:1.1!important;padding:2mm .4mm!important;white-space:nowrap!important;letter-spacing:.12em!important}
+
+      /* Datos a rellenar: más grandes y uniformes */
+      .line-row{position:absolute!important;left:6mm!important;right:6mm!important;top:38mm!important;height:9mm!important;display:grid!important;grid-template-columns:auto 1fr!important;align-items:end!important;gap:1.5mm!important;font-size:5.3mm!important}
+      .under{min-height:7mm!important;font-size:5.5mm!important;padding:0 1.4mm .35mm!important;font-weight:600!important}
+      .triple{position:absolute!important;left:6mm!important;right:6mm!important;top:48mm!important;height:9mm!important;display:grid!important;grid-template-columns:auto 22mm auto 32mm auto 1fr!important;align-items:end!important;gap:.8mm!important;font-size:5.1mm!important}
+      .triple .under{font-size:5.3mm!important}
+
+      .receipt>div:nth-of-type(4){position:absolute!important;left:6mm!important;right:6mm!important;top:58mm!important;height:31mm!important}
+      .concept-title{font-size:5.2mm!important;line-height:6mm!important;height:6mm!important}
+      .concept-box{height:25mm!important;min-height:25mm!important}
+      .concept-lines{background:none!important}
+      .concept-text{padding:3mm 7mm!important;font-size:5.7mm!important;line-height:8mm!important}
+      .cancelled span{font-size:7mm!important;border-bottom-width:.5mm!important;padding:0 4mm .8mm!important}
+
+      .footer{position:absolute!important;left:6mm!important;right:6mm!important;top:94mm!important;height:39mm!important;display:grid!important;grid-template-columns:105mm 70mm!important;gap:13mm!important;align-items:start!important;padding:0!important}
+      .date-sign{position:relative!important;height:39mm!important;display:block!important;padding:0!important}
+      .date-row{position:absolute!important;left:0!important;top:0!important;display:grid!important;grid-template-columns:24mm repeat(3,18mm)!important;width:78mm!important;height:9mm!important}
+      .date-label{font-size:5.1mm!important}
+      .date-cell{font-size:5.2mm!important;min-height:9mm!important;height:9mm!important}
+      .signature{position:absolute!important;left:3mm!important;top:28mm!important;width:72mm!important;margin:0!important;padding-top:.7mm!important;font-size:4.8mm!important}
+
+      /* Montos con columnas separadas para evitar superposición */
+      .pay-grid{width:70mm!important;height:29mm!important;display:grid!important;grid-template-columns:42mm 28mm!important}
+      .pay-labels{font-size:4.8mm!important;line-height:1!important}
+      .pay-labels div{padding:1.5mm 1.5mm!important;white-space:nowrap!important;display:flex!important;align-items:center!important;justify-content:flex-end!important}
+      .pay-values div{padding:1.05mm 1.2mm!important;font-size:5.2mm!important;line-height:1!important;min-height:9.65mm!important;height:9.65mm!important;white-space:nowrap!important;overflow:visible!important;display:flex!important;align-items:center!important}
+      .keep{font-size:2.7mm!important;margin-top:1mm!important;line-height:1.08!important;white-space:normal!important;width:70mm!important}
+
+      /* v1.12: aprovechar el ancho útil y desplazar el encabezado a la izquierda */
+      .header{left:1.5mm!important;right:11mm!important;grid-template-columns:12mm 1fr 45mm!important}
+      .brand{position:relative!important;left:-4mm!important}
+      .num-box{position:relative!important;left:-4mm!important}
+
+      /* El bloque de montos queda pegado al borde derecho útil, sin franja vacía */
+      .footer{display:block!important;left:6mm!important;right:6mm!important}
+      .date-sign{position:absolute!important;left:0!important;top:0!important;width:105mm!important}
+      .footer>div:last-child{position:absolute!important;right:0!important;top:0!important;width:70mm!important}
+
+      /* v1.13: zona central equilibrada y visualmente coherente */
+      .line-row{
+        left:7mm!important;right:7mm!important;top:38mm!important;height:9mm!important;
+        grid-template-columns:17mm 1fr!important;gap:2mm!important;
+      }
+      .line-row>span{display:flex!important;align-items:flex-end!important;height:7mm!important}
+      .line-row .under{padding-left:2mm!important}
+
+      .triple{
+        left:7mm!important;right:7mm!important;top:48mm!important;height:9mm!important;
+        grid-template-columns:15mm minmax(25mm,1fr) 14mm minmax(34mm,1.15fr) 14mm minmax(42mm,1.35fr)!important;
+        column-gap:2mm!important;
+      }
+      .triple>span{display:flex!important;align-items:flex-end!important;height:7mm!important;white-space:nowrap!important}
+      .triple .under{padding-left:2mm!important;width:auto!important}
+
+      .receipt>div:nth-of-type(4){left:7mm!important;right:7mm!important;top:58mm!important}
+      .concept-title{padding-left:0!important}
+      .concept-text{padding:3.2mm 8mm!important;font-size:5.8mm!important}
+      .pay-grid{width:70mm!important}
+      .keep{width:70mm!important}
+
+      /* v1.14: datos rellenados más grandes, azules y en negrita */
+      .line-row .under{font-size:6.4mm!important;font-weight:800!important;color:#173f78!important;line-height:1!important;}
+      .triple .under{font-size:6.1mm!important;font-weight:800!important;color:#173f78!important;line-height:1!important;}
+      .concept-text{font-size:6.5mm!important;font-weight:800!important;color:#173f78!important;line-height:8mm!important;}
+      .pay-values div{font-size:6.1mm!important;font-weight:800!important;color:#173f78!important;}
+      .date-cell{font-size:5.4mm!important;font-weight:800!important;color:#173f78!important;}
+      .cancelled span{font-size:10mm!important;font-weight:900!important;color:#1676a8!important;border-bottom-color:#1676a8!important;border-bottom-width:.8mm!important;font-family:Arial,sans-serif!important;letter-spacing:.02em!important;transform:rotate(-16deg)!important;opacity:.92!important;}
+    }
+
+    /* Integración con la agenda: selector de pacientes compartidos */
+    .patient-tools{margin:0 0 16px;padding:12px;border:1px solid #d7e1dc;border-radius:14px;background:#f7faf8}
+    .patient-tools .row{align-items:stretch}
+    .patient-tools button{padding:10px 12px;white-space:nowrap}
+    .patient-status{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px}
+    .linked-patient{color:var(--green);font-weight:800}
+    @media print{.patient-tools{display:none!important}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>Recibo de ingreso</h1>
+    <div class="sub">Escribe los datos y el recibo se completa automáticamente.</div>
+    <div class="patient-tools">
+      <label>Paciente guardado en la agenda</label>
+      <div class="row">
+        <input id="receiptPatientLookup" list="receiptPatientDatalist" placeholder="Buscar por nombre o DNI..." autocomplete="off" />
+        <datalist id="receiptPatientDatalist"></datalist>
+        <button class="secondary" id="receiptLoadPatientBtn" type="button">Cargar</button>
+      </div>
+      <div id="receiptPatientStatus" class="patient-status">Puedes usar un paciente existente o escribir uno nuevo.</div>
+    </div>
+    <div class="grid">
+      <div class="field full"><label>Sr(a)</label><input id="name" autocomplete="off" /></div>
+      <div class="field"><label>Edad</label><input id="age" inputmode="numeric" /></div>
+      <div class="field"><label>DNI</label><input id="dni" inputmode="numeric" /></div>
+      <div class="field full"><label>Celular</label><input id="phone" inputmode="tel" /></div>
+      <div class="field full"><label>Por concepto de</label><textarea id="concept"></textarea></div>
+      <div class="field"><label>Fecha</label><input id="date" type="date" /></div>
+      <div class="field"><label>N.º de recibo</label><input id="number" inputmode="numeric" /></div>
+      <div class="field"><label>Tratado S/</label><input id="treated" class="money" inputmode="decimal" /></div>
+      <div class="field"><label>A cuenta S/</label><input id="account" class="money" inputmode="decimal" /></div>
+      <div class="field full"><label>Saldo S/</label><input id="balance" class="money" inputmode="decimal" /></div>
+    </div>
+    <label class="switch"><input id="cancelled" type="checkbox" /> Mostrar “CANCELADO”</label>
+    <div class="actions">
+      <button class="secondary" id="newBtn">Nuevo</button>
+      <button class="primary" id="saveBtn">Guardar</button>
+      <button class="secondary" id="printBtn">Imprimir / PDF</button>
+      <button class="danger" id="clearBtn">Borrar datos</button>
+    </div>
+    <div class="history"><h2>Últimos recibos</h2><div id="history"></div></div>
+  </aside>
+  <main class="main">
+    <div class="toolbar"><div><strong>Vista previa</strong><br><small>Formato pensado para impresión horizontal A5.</small></div><small>Los datos se guardan solo en este dispositivo.</small></div>
+    <div class="receipt-wrap">
+      <section class="receipt" id="receipt">
+        <div class="header">
+          <div class="logo">⚕</div>
+          <div class="brand">
+            <div class="top">CENTRO QUIRÚRGICO ESPECIALIZADO</div>
+            <div class="name">“MÁS VIDA”</div>
+            <div class="addr">Clínica Miranda: Jr. Juan Parra del Riego N° 701 - Consultorio 404<br>(entre Jr. Parra del Riego y Jr. Moquegua)<br>Cel. 959 840 864</div>
+          </div>
+          <div class="num-box"><div class="num-title">RECIBO DE INGRESO</div><div class="num">Nº <span data-out="number">000501</span></div></div>
+        </div>
+        <div class="line-row"><span>Sr(a):</span><div class="under" data-out="name"></div></div>
+        <div class="triple"><span>Edad:</span><div class="under" data-out="age"></div><span>DNI:</span><div class="under" data-out="dni"></div><span>Cel.:</span><div class="under" data-out="phone"></div></div>
+        <div><div class="concept-title">POR CONCEPTO DE:</div><div class="concept-box"><div class="concept-lines"></div><div class="concept-text" data-out="concept"></div><div class="cancelled" id="cancelMark" hidden><span>CANCELADO</span></div></div></div>
+        <div class="footer">
+          <div class="date-sign"><div class="date-row"><div class="date-label">FECHA</div><div class="date-cell" data-out="day"></div><div class="date-cell" data-out="month"></div><div class="date-cell" data-out="year"></div></div><div class="signature">ENMA VERA Q.</div></div>
+          <div><div class="pay-grid"><div class="pay-labels"><div>TRATADO&nbsp;&nbsp; S/</div><div>A CUENTA&nbsp; S/</div><div>SALDO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; S/</div></div><div class="pay-values"><div data-out="treated"></div><div data-out="account"></div><div data-out="balance"></div></div></div><div class="keep">CONSERVE ESTE DOCUMENTO<br>PARA SU CANJE CON SU BOLETA<br>DE VENTA Y/O FACTURA</div></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+const ids=['name','age','dni','phone','concept','date','number','treated','account','balance','cancelled'];
+const PATIENT_STORE='masVidaPatients';
+const RECEIPT_STORE='mv_receipts';
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
+let currentPatientId='';
+
+function newLocalId(){
+  if(window.crypto && typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();
+  return 'mv-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':'&quot;',"'":'&#039;'}[c]))}
+function getPatients(){try{return JSON.parse(localStorage.getItem(PATIENT_STORE)||'[]')}catch{return []}}
+function setPatients(v){localStorage.setItem(PATIENT_STORE,JSON.stringify(v))}
+function normalizePhones(rawPhones,legacyPhone){
+  if(Array.isArray(rawPhones)&&rawPhones.length)return rawPhones.map(p=>({owner:(p.owner||'Paciente').trim(),number:(p.number||'').trim()})).filter(p=>p.number);
+  return legacyPhone&&String(legacyPhone).trim()?[{owner:'Paciente',number:String(legacyPhone).trim()}]:[];
+}
+function primaryPhone(p){const list=normalizePhones(p?.phones,p?.phone);return list[0]?.number||p?.phone||''}
+function refreshPatientLookup(){
+  const list=getPatients();
+  $('receiptPatientDatalist').innerHTML=list.map(p=>`<option value="${esc(p.name)} — ${esc(p.dni||'sin DNI')}"></option>`).join('');
+}
+function findPatientFromLookup(){
+  const val=$('receiptPatientLookup').value.trim().toLowerCase();
+  if(!val)return null;
+  return getPatients().find(p=>{
+    const name=(p.name||'').toLowerCase(),dni=(p.dni||'').toLowerCase();
+    return val===`${name} — ${dni||'sin dni'}` || (dni&&val.includes(dni)) || (name&&val.startsWith(name));
+  })||null;
+}
+function loadPatient(p){
+  if(!p)return false;
+  currentPatientId=p.id||'';
+  $('name').value=p.name||'';$('age').value=p.age||'';$('dni').value=p.dni||'';$('phone').value=primaryPhone(p);
+  $('receiptPatientLookup').value=`${p.name||''} — ${p.dni||'sin DNI'}`;
+  $('receiptPatientStatus').innerHTML=`<span class="linked-patient">Paciente vinculado:</span> ${esc(p.name||'')}`;
+  update();return true;
+}
+function loadPatientById(id){return loadPatient(getPatients().find(p=>p.id===id))}
+function syncPatientFromReceipt(){
+  const name=$('name').value.trim(),dni=$('dni').value.trim(),age=$('age').value.trim(),phone=$('phone').value.trim();
+  if(!name)return null;
+  const list=getPatients();
+  let p=list.find(x=>(currentPatientId&&x.id===currentPatientId)||(dni&&x.dni===dni)||((x.name||'').toLowerCase()===name.toLowerCase()));
+  if(!p){p={id:newLocalId(),name,age,dni,phone,phones:phone?[{owner:'Paciente',number:phone}]:[]};list.push(p)}
+  else{
+    p.name=name;p.age=age;p.dni=dni;p.phone=phone;
+    const phones=normalizePhones(p.phones,p.phone);
+    if(phone){
+      const idx=phones.findIndex(x=>(x.owner||'').toLowerCase()==='paciente');
+      if(idx>=0)phones[idx].number=phone;else phones.unshift({owner:'Paciente',number:phone});
+    }
+    p.phones=phones;
+  }
+  currentPatientId=p.id;setPatients(list);refreshPatientLookup();
+  $('receiptPatientLookup').value=`${p.name} — ${p.dni||'sin DNI'}`;
+  $('receiptPatientStatus').innerHTML=`<span class="linked-patient">Paciente vinculado:</span> ${esc(p.name)}`;
+  return p;
+}
+function fmtNum(n){const s=String(n||'').replace(/\D/g,'');return s?String(parseInt(s,10)).padStart(6,'0'):'000000'}
+function fmtMoney(v){if(v==='')return '';let n=Number(String(v).replace(',','.'));return Number.isFinite(n)?n.toFixed(2):v}
+function update(){
+  document.querySelectorAll('[data-out]').forEach(el=>{const k=el.dataset.out;if(ids.includes(k))el.textContent=$(k).value||''});
+  document.querySelector('[data-out="number"]').textContent=fmtNum($('number').value);
+  ['treated','account','balance'].forEach(k=>document.querySelector(`[data-out="${k}"]`).textContent=fmtMoney($(k).value));
+  const d=$('date').value?new Date($('date').value+'T12:00:00'):null;
+  document.querySelector('[data-out="day"]').textContent=d?String(d.getDate()).padStart(2,'0'):'';
+  document.querySelector('[data-out="month"]').textContent=d?String(d.getMonth()+1).padStart(2,'0'):'';
+  document.querySelector('[data-out="year"]').textContent=d?String(d.getFullYear()).slice(-2):'';
+  $('cancelMark').hidden=!$('cancelled').checked;
+}
+function autoBalance(){const t=parseFloat($('treated').value.replace(',','.'))||0;const a=parseFloat($('account').value.replace(',','.'))||0;if($('treated').value||$('account').value)$('balance').value=(t-a).toFixed(2);update()}
+ids.forEach(id=>$(id).addEventListener(id==='cancelled'?'change':'input',()=>{if(id==='treated'||id==='account')autoBalance();else update()}));
+function nextNumber(){const arr=JSON.parse(localStorage.getItem(RECEIPT_STORE)||'[]');const last=arr.reduce((m,r)=>Math.max(m,Number(r.number)||0),500);return last+1}
+function blank(){
+  currentPatientId='';ids.forEach(id=>{if(id==='cancelled')$(id).checked=false;else $(id).value=''});
+  $('receiptPatientLookup').value='';$('receiptPatientStatus').textContent='Puedes usar un paciente existente o escribir uno nuevo.';
+  $('date').value=today();$('number').value=nextNumber();update();$('name').focus();
+}
+function save(){
+  const data={};ids.forEach(id=>data[id]=id==='cancelled'?$(id).checked:$(id).value);
+  if(!data.name&&!data.concept){alert('Escribe al menos el nombre o el concepto antes de guardar.');return}
+  const patient=syncPatientFromReceipt();if(patient)data.patientId=patient.id;
+  let arr=JSON.parse(localStorage.getItem(RECEIPT_STORE)||'[]');
+  const idx=arr.findIndex(r=>String(r.number)===String(data.number));if(idx>=0)arr[idx]=data;else arr.unshift(data);
+  localStorage.setItem(RECEIPT_STORE,JSON.stringify(arr.slice(0,1000)));renderHistory();
+  window.parent?.postMessage({type:'masvida-receipts-updated'},'*');
+  alert('Recibo guardado. El paciente quedó vinculado a la agenda.');
+}
+function load(r){
+  currentPatientId=r.patientId||'';ids.forEach(id=>{if(id==='cancelled')$(id).checked=!!r[id];else $(id).value=r[id]||''});
+  if(currentPatientId){const p=getPatients().find(x=>x.id===currentPatientId);if(p){$('receiptPatientLookup').value=`${p.name} — ${p.dni||'sin DNI'}`;$('receiptPatientStatus').innerHTML=`<span class="linked-patient">Paciente vinculado:</span> ${esc(p.name)}`}}
+  else{$('receiptPatientLookup').value='';$('receiptPatientStatus').textContent='Recibo antiguo sin vínculo directo. Al guardarlo se vinculará al paciente.'}
+  update();
+}
+function loadReceiptNumber(number){const arr=JSON.parse(localStorage.getItem(RECEIPT_STORE)||'[]');const r=arr.find(x=>String(x.number)===String(number));if(r)load(r)}
+function renderHistory(){
+  const el=$('history');const arr=JSON.parse(localStorage.getItem(RECEIPT_STORE)||'[]');
+  if(!arr.length){el.innerHTML='<div class="empty">Aún no hay recibos guardados.</div>';return}
+  el.innerHTML=arr.slice(0,12).map((r,i)=>`<div class="hist-item"><span><strong>#${fmtNum(r.number)}</strong><br>${esc(r.name||'Sin nombre')}</span><button class="secondary" data-i="${i}">Abrir</button></div>`).join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>load(arr[Number(b.dataset.i)]));
+}
+$('receiptLoadPatientBtn').onclick=()=>{const p=findPatientFromLookup();if(!p){alert('No se encontró ese paciente en la agenda.');return}loadPatient(p)};
+$('receiptPatientLookup').addEventListener('change',()=>{const p=findPatientFromLookup();if(p)loadPatient(p)});
+$('saveBtn').onclick=save;$('newBtn').onclick=blank;$('printBtn').onclick=()=>window.print();$('clearBtn').onclick=()=>{if(confirm('¿Borrar los datos actuales del formulario?'))blank()};
+window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();save()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();window.print()}});
+window.addEventListener('message',e=>{
+  const d=e.data||{};
+  if(d.type==='loadPatient'){refreshPatientLookup();blank();loadPatientById(d.patientId)}
+  if(d.type==='loadReceipt'){refreshPatientLookup();loadReceiptNumber(d.number)}
+  if(d.type==='refreshPatients')refreshPatientLookup();
+});
+window.addEventListener('storage',e=>{if(e.key===PATIENT_STORE)refreshPatientLookup();if(e.key===RECEIPT_STORE)renderHistory()});
+refreshPatientLookup();$('date').value=today();$('number').value=nextNumber();update();renderHistory();
+const pendingPatient=localStorage.getItem('mv_receipt_patient_to_load');if(pendingPatient){localStorage.removeItem('mv_receipt_patient_to_load');loadPatientById(pendingPatient)}
+const pendingReceipt=localStorage.getItem('mv_receipt_to_open');if(pendingReceipt){localStorage.removeItem('mv_receipt_to_open');loadReceiptNumber(pendingReceipt)}
+</script>
+</body></html>

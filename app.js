@@ -1,5 +1,6 @@
 const APPT_STORE="masVidaAppointments";
 const PATIENT_STORE="masVidaPatients";
+const RECEIPT_STORE="mv_receipts";
 
 const PIN_HASH_STORE="masVidaPinHash";
 const PIN_SALT_STORE="masVidaPinSalt";
@@ -93,9 +94,9 @@ function newLocalId(){
   return "mv-"+Date.now()+"-"+Math.random().toString(36).slice(2,10);
 }
 
-const colors={consulta:"#e2b72f",cirugia:"#c65ddd",control:"#75cf68",postcirugia:"#55c7b8",muestra:"#69aee8",laboratorio:"#e29a61"};
-const sourceColors={Facebook:"#4d95c7",TikTok:"#9f57b8",Referido:"#63b458",Google:"#b9a84d",Otro:"#b7745f"};
-const sourceOrder=["Facebook","TikTok","Referido","Google","Otro"];
+const colors={consulta:"#e2b72f",cirugia_pendiente:"#ff8a5b",cirugia:"#c65ddd",control:"#75cf68",postcirugia:"#38c7b4",muestra:"#5aa9ff",laboratorio:"#ff5f6d",enma:"#b792ff"};
+const sourceColors={Facebook:"#4d95c7",TikTok:"#9f57b8",Referido:"#63b458",Google:"#b9a84d",Otro:"#b7745f","No especificado":"#8a9a9a"};
+const sourceOrder=["Facebook","TikTok","Referido","Google","Otro","No especificado"];
 
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
 function formatDate(d,opts={weekday:"long",day:"numeric",month:"long",year:"numeric"}){return new Intl.DateTimeFormat("es-PE",opts).format(d)}
@@ -106,10 +107,12 @@ function save(){
 }
 function label(t){
   return t==="cirugia"?"CIRUGÍA":
+         t==="cirugia_pendiente"?"CIRUGÍA PENDIENTE":
          t==="control"?"CONTROL":
          t==="postcirugia"?"POST CIRUGÍA":
          t==="muestra"?"MUESTRA PATOLÓGICA":
-         t==="laboratorio"?"APOYO LABORATORIO":"CONSULTA";
+         t==="laboratorio"?"APOYO LABORATORIO":
+         t==="enma"?"ACTIVIDADES ENMA":"CONSULTA";
 }
 
 
@@ -265,6 +268,7 @@ normalizePatients();
 function linkLegacyAppointmentsToPatients(){
   let changed=false;
   appointments.forEach(a=>{
+    if(a.type==="enma")return;
     if(a.patientId)return;
     const p=patients.find(p=>
       (a.dni && p.dni && a.dni===p.dni) ||
@@ -504,10 +508,12 @@ function render(){
   const list=activeFilter?allToday.filter(a=>a.type===activeFilter):allToday;
   $("consultCount").textContent=allToday.filter(a=>a.type==="consulta").length;
   $("surgeryCount").textContent=allToday.filter(a=>a.type==="cirugia").length;
+  $("pendingSurgeryCount").textContent=allToday.filter(a=>a.type==="cirugia_pendiente").length;
   $("controlCount").textContent=allToday.filter(a=>a.type==="control").length;
   $("postSurgeryCount").textContent=allToday.filter(a=>a.type==="postcirugia").length;
   $("pathologyCount").textContent=allToday.filter(a=>a.type==="muestra").length;
   $("labCount").textContent=allToday.filter(a=>a.type==="laboratorio").length;
+  $("enmaCount").textContent=allToday.filter(a=>a.type==="enma").length;
 
   renderTimeline(list);renderUpcoming();renderSources();renderPatients();renderAllSurgeries();renderAllControls();renderStats();
 }
@@ -520,6 +526,7 @@ function surgeryChargeTypeLabel(v){
 }
 
 function paymentText(a){
+  if(a.type==="enma") return {pill:"",detail:"",balance:0};
   if(a.type==="cirugia"){
     const total=Number(a.surgeryAmount||0),paid=Number(a.surgeryPaid||0),balance=Math.max(0,total-paid);
     const status=balance<=0&&total>0?"Pagado completo":paid>0?"A cuenta":"Pendiente";
@@ -552,17 +559,25 @@ function renderTimeline(list){
       if(a.pathologySentDate)parts.push(`Patología: ${a.pathologySentDate}`);
       if(a.pathologyResultRequest)parts.push(`Resultados: ${a.pathologyResultRequest}`);
       extra=`<div class="postop-info pathology-summary"><strong>Muestra patológica</strong><span>${esc(parts.join(" · ")||"Sin detalles registrados")}</span></div>`;
+    } else if(a.type==="enma"){
+      const kind=a.enmaActivityType||"llamar";
+      if(kind==="llamar"){
+        extra=`<div class="postop-info enma-summary"><strong>☎ Llamar a: ${esc(a.enmaCallName||"Sin nombre")}</strong><span>${a.enmaCallPhone?`Tel.: ${esc(a.enmaCallPhone)}`:"Sin teléfono"}${a.enmaCallReason?` · Motivo: ${esc(a.enmaCallReason)}`:""}</span></div>`;
+      }else if(kind==="reunion"){
+        extra=`<div class="postop-info enma-summary"><strong>◈ Reunión: ${esc(a.enmaMeetingSubject||"Sin especificar")}</strong><span>${a.enmaMeetingPlace?`Lugar: ${esc(a.enmaMeetingPlace)}`:"Lugar no especificado"}${a.enmaMeetingReason?` · Motivo: ${esc(a.enmaMeetingReason)}`:""}</span></div>`;
+      }else{
+        extra=`<div class="postop-info enma-summary"><strong>✦ Actividad</strong></div>`;
+      }
     }
-    const displayedSource=sourceDisplay(a);const origin=displayedSource?`<span class="origin-pill">Origen: ${esc(displayedSource)}</span>`:"";
+    const displayedSource=a.type==="enma"?"":sourceDisplay(a);const origin=displayedSource?`<span class="origin-pill">Origen: ${esc(displayedSource)}</span>`:"";
     const surgeryName=a.type==="cirugia"&&a.surgeryName?` · ${esc(a.surgeryName)}`:"";
     const payBtn=a.type==="cirugia"&&pay.balance>0?`<button class="pay-btn" onclick="openPayment('${a.id}')">Agregar pago</button>`:"";
     return `<div class="appointment-row">
       <div class="time-box"><span class="time-main">${esc(a.time)}</span><span class="ampm">${parseInt(a.time,10)<12?"AM":"PM"}</span></div>
       <article class="appt-card ${a.type}">
         <div>
-          <span class="type-pill">${label(a.type)}${surgeryName}</span>${origin}<span class="payment-pill">${esc(pay.pill)}</span>
-          <div class="patient-line"><strong>${esc(a.name)}</strong><span class="patient-age">${a.age?esc(a.age)+" años":""}</span></div>
-          <div class="patient-meta"><span>▣ DNI: ${esc(a.dni||"—")}</span><span>☎ ${esc(phonesDisplay(a.phones,a.phone))}</span></div>
+          <span class="type-pill">${label(a.type)}${surgeryName}</span>${origin}${pay.pill?`<span class="payment-pill">${esc(pay.pill)}</span>`:""}
+          ${a.type==="enma"?`<div class="patient-line enma-title"><strong>${esc(a.enmaActivityType==="otro"?(a.enmaOtherActivity||"Sin especificar"):enmaActivityLabel(a.enmaActivityType))}</strong></div>`:`<div class="patient-line"><strong>${esc(a.name)}</strong><span class="patient-age">${a.age?esc(a.age)+" años":""}</span></div><div class="patient-meta"><span>▣ DNI: ${esc(a.dni||"—")}</span><span>☎ ${esc(phonesDisplay(a.phones,a.phone))}</span></div>`}
         </div>
         ${extra}
         <div class="actions">${payBtn}<button class="edit-btn" onclick="editAppointment('${a.id}')">Editar</button><button class="more-btn" onclick="editAppointment('${a.id}')">•••</button></div>
@@ -578,19 +593,25 @@ function renderUpcoming(){
 }
 
 function sourceCountsForMonth(date=selectedDate){
-  const c={Facebook:0,TikTok:0,Referido:0,Google:0,Otro:0};
+  const c={Facebook:0,TikTok:0,Referido:0,Google:0,Otro:0,"No especificado":0};
   const year=date.getFullYear(),month=date.getMonth();
   appointments.forEach(a=>{
+    if(a.type==="enma")return;
     if(!a.date)return;
     const d=new Date(a.date+"T12:00:00");
     if(d.getFullYear()!==year||d.getMonth()!==month)return;
-    if(c[a.source]!==undefined)c[a.source]++;
+    const src=(a.source && c[a.source]!==undefined)?a.source:"No especificado";
+    c[src]++;
   });
   return c;
 }
 function sourceCounts(){
-  const c={Facebook:0,TikTok:0,Referido:0,Google:0,Otro:0};
-  appointments.forEach(a=>{if(c[a.source]!==undefined)c[a.source]++});
+  const c={Facebook:0,TikTok:0,Referido:0,Google:0,Otro:0,"No especificado":0};
+  appointments.forEach(a=>{
+    if(a.type==="enma")return;
+    const src=(a.source && c[a.source]!==undefined)?a.source:"No especificado";
+    c[src]++;
+  });
   return c;
 }
 function renderSources(){
@@ -619,6 +640,7 @@ function renderSources(){
 function patientHistory(p){
   return appointments
     .filter(a=>{
+      if(a.type==="enma") return false;
       if(a.patientId && p.id && a.patientId===p.id) return true;
       if(p.dni && a.dni && a.dni===p.dni) return true;
       return (a.name||"").toLowerCase()===(p.name||"").toLowerCase();
@@ -644,6 +666,7 @@ function historyDetail(a){
     return `Muestra Patológica${type}`;
   }
   if(a.type==="laboratorio") return "Apoyo en Exámenes de Laboratorio";
+  if(a.type==="cirugia_pendiente") return "Cirugía Pendiente";
   return "Consulta";
 }
 
@@ -655,6 +678,33 @@ function formatHistoryDate(dateStr){
     return dateStr;
   }
 }
+
+function getReceipts(){
+  try{return JSON.parse(localStorage.getItem(RECEIPT_STORE)||"[]")}catch{return []}
+}
+function receiptMatchesPatient(r,p){
+  if(r.patientId&&p.id)return r.patientId===p.id;
+  if(r.dni&&p.dni)return String(r.dni).trim()===String(p.dni).trim();
+  return (r.name||"").trim().toLowerCase()===(p.name||"").trim().toLowerCase();
+}
+function patientReceiptHistory(p){
+  return getReceipts().filter(r=>receiptMatchesPatient(r,p)).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||Number(b.number||0)-Number(a.number||0));
+}
+function fmtReceiptNum(n){const s=String(n||"").replace(/\D/g,"");return s?String(parseInt(s,10)).padStart(6,"0"):"000000"}
+function receiptMoney(v){const n=Number(String(v||0).replace(",","."));return Number.isFinite(n)?n.toFixed(2):String(v||"")}
+function openReceiptForPatient(patientId){
+  localStorage.setItem("mv_receipt_patient_to_load",patientId);
+  switchView("recibos");
+  const frame=$("receiptsFrame");
+  if(frame&&frame.contentWindow)setTimeout(()=>frame.contentWindow.postMessage({type:"loadPatient",patientId},"*"),120);
+}
+function openSavedReceipt(number){
+  localStorage.setItem("mv_receipt_to_open",String(number));
+  switchView("recibos");
+  const frame=$("receiptsFrame");
+  if(frame&&frame.contentWindow)setTimeout(()=>frame.contentWindow.postMessage({type:"loadReceipt",number},"*"),120);
+}
+
 function renderPatients(q=""){
   const query=(q||$("patientSearch")?.value||"").toLowerCase().trim();
   const list=patients.filter(p=>!query||[p.name,p.dni,p.phone,...normalizePhones(p.phones,p.phone).map(x=>`${x.owner} ${x.number}`)].join(" ").toLowerCase().includes(query));
@@ -700,6 +750,15 @@ function renderPatients(q=""){
       </div>
 
       ${historyHtml}
+
+      ${(()=>{
+        const receipts=patientReceiptHistory(p);
+        return `<div class="patient-receipts">
+          <div class="patient-receipts-head"><b>Recibos</b><span>${receipts.length} ${receipts.length===1?"recibo":"recibos"}</span></div>
+          ${receipts.length?receipts.slice(0,4).map(r=>`<div class="patient-receipt-row"><strong>#${fmtReceiptNum(r.number)}</strong><span>${esc(formatHistoryDate(r.date||""))}</span><span>${esc(r.concept||"Sin concepto")} · S/ ${receiptMoney(r.account||r.treated||0)}</span><button type="button" onclick="openSavedReceipt('${esc(r.number)}')">Abrir</button></div>`).join(""):`<div class="no-history">Aún no tiene recibos guardados.</div>`}
+          <button type="button" class="emit-receipt-btn" onclick="openReceiptForPatient('${esc(p.id)}')">＋ Emitir recibo</button>
+        </div>`;
+      })()}
     </div>`;
   }).join("") : `<div class="empty">No se encontraron pacientes.</div>`;
 }
@@ -727,6 +786,7 @@ function appointmentsForStatsMonth(){
 function uniquePatientsInAppointments(list){
   const keys=new Set();
   list.forEach(a=>{
+    if(a.type==="enma")return;
     const key=a.patientId || (a.dni?`dni:${a.dni}`:`name:${(a.name||"").trim().toLowerCase()}`);
     if(key)keys.add(key);
   });
@@ -744,11 +804,12 @@ function renderStats(){
 
   const types=[
     {id:"consulta",label:"Consultas",color:"#e2b72f"},
+    {id:"cirugia_pendiente",label:"Cirugías Pendientes",color:"#ff8a5b"},
     {id:"cirugia",label:"Cirugías",color:"#c65ddd"},
     {id:"control",label:"Controles",color:"#75cf68"},
-    {id:"postcirugia",label:"Post Cirugías",color:"#55c7b8"},
-    {id:"muestra",label:"Muestra Patológica",color:"#69aee8"},
-    {id:"laboratorio",label:"Apoyo en Exámenes de Laboratorio",color:"#e29a61"}
+    {id:"postcirugia",label:"Post Cirugías",color:"#38c7b4"},
+    {id:"muestra",label:"Muestra Patológica",color:"#5aa9ff"},
+    {id:"laboratorio",label:"Apoyo en Exámenes de Laboratorio",color:"#ff5f6d"}
   ];
 
   $("statsActivitySummary").innerHTML=types.map(t=>{
@@ -759,14 +820,14 @@ function renderStats(){
     </div>`;
   }).join("");
 
-  const sources=["Facebook","TikTok","Referido","Google","Otro"];
+  const sources=["Facebook","TikTok","Referido","Google","Otro","No especificado"];
 
   $("statsDetailedBreakdown").innerHTML=types.map(t=>{
     const subset=monthAppointments.filter(a=>a.type===t.id);
     const total=subset.length;
 
     const rows=sources.map(source=>{
-      const sourceItems=subset.filter(a=>a.source===source);
+      const sourceItems=subset.filter(a=>source==="No especificado" ? (!a.source || a.source==="No especificado" || !sourceOrder.includes(a.source)) : a.source===source);
       const count=sourceItems.length;
       const pct=total?Math.round(count/total*100):0;
 
@@ -810,18 +871,35 @@ function renderStats(){
   }).join("");
 }
 
+function updateEnmaActivityFields(){
+  const kind=$("enmaActivityType")?.value||"llamar";
+  $("enmaCallFields")?.classList.toggle("hidden",kind!=="llamar");
+  $("enmaMeetingFields")?.classList.toggle("hidden",kind!=="reunion");
+  $("enmaOtherFields")?.classList.toggle("hidden",kind!=="otro");
+}
+function enmaActivityLabel(kind){
+  return kind==="reunion"?"PROGRAMAR REUNIÓN":kind==="otro"?"OTRO":"LLAMAR";
+}
 function updateFields(){
   const t=$("type").value;
+  const isEnma=t==="enma";
 
   $("surgeryFields").classList.toggle("hidden",t!=="cirugia");
   $("controlFields").classList.toggle("hidden",t!=="control");
   $("postSurgeryFields").classList.toggle("hidden",t!=="postcirugia");
   $("pathologyFields").classList.toggle("hidden",t!=="muestra");
+  $("enmaFields").classList.toggle("hidden",!isEnma);
 
-  // Pago solo para Consulta y Control. Cirugía usa su propia cobranza.
-  const showSimplePayment=(t==="consulta"||t==="control");
+  document.querySelector(".patient-section")?.classList.toggle("hidden",isEnma);
+  $("sourceFieldLabel")?.classList.toggle("hidden",isEnma);
+  $("otherSourceField")?.classList.toggle("hidden",isEnma || $("source").value!=="Otro");
+  $("referredByField")?.classList.toggle("hidden",isEnma || $("source").value!=="Referido");
+
+  // Pago simple para Consulta, Cirugía Pendiente y Control. Las actividades de Enma no tienen pago.
+  const showSimplePayment=(t==="consulta"||t==="cirugia_pendiente"||t==="control");
   $("consultControlPaymentFields").classList.toggle("hidden",!showSimplePayment);
 
+  updateEnmaActivityFields();
   updateSimplePaymentAmountField();
   updatePaymentSummary();
 }
@@ -863,6 +941,10 @@ function openNew(){
   $("surgeon2Other").value="";
   $("anesthesiologistOther").value="";
   $("instrumentistOther").value="";
+  $("enmaActivityType").value="llamar";
+  $("enmaCallName").value="";$("enmaCallPhone").value="";$("enmaCallReason").value="";
+  $("enmaMeetingSubject").value="";$("enmaMeetingPlace").value="";$("enmaMeetingReason").value="";
+  $("enmaOtherActivity").value="";
   $("deleteBtn").classList.add("hidden");
   $("patientLookup").value="";
   setPhoneRows([],"");
@@ -880,6 +962,10 @@ function editAppointment(id){
   $("formDate").value=a.date;
   setEasyTimeFrom24(a.time);
   $("type").value=a.type;
+  $("enmaActivityType").value=a.enmaActivityType||"llamar";
+  $("enmaCallName").value=a.enmaCallName||"";$("enmaCallPhone").value=a.enmaCallPhone||"";$("enmaCallReason").value=a.enmaCallReason||"";
+  $("enmaMeetingSubject").value=a.enmaMeetingSubject||"";$("enmaMeetingPlace").value=a.enmaMeetingPlace||"";$("enmaMeetingReason").value=a.enmaMeetingReason||"";
+  $("enmaOtherActivity").value=a.enmaOtherActivity||"";
   $("source").value=a.source||"No especificado";
   $("sourceOther").value=a.sourceOther||"";$("referredBy").value=a.referredBy||"";
   $("name").value=a.name||"";
@@ -938,7 +1024,7 @@ $("addPaymentConfirm").onclick=()=>{
 $("addBtn").onclick=openNew;
 $("simplePaymentStatus").onchange=updateSimplePaymentAmountField;
 if($("prevWeek"))$("prevWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()-7);selectedDate=new Date(selectedDate);render();};
-if($("nextWeek"))$("nextWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()+7);selectedDate=new Date(selectedDate);render();};$("closeModal").onclick=()=>$("modal").classList.add("hidden");$("type").onchange=updateFields;$("source").onchange=updateOtherSourceField;$("postOpUnit").onchange=updatePostOpCustomField;$("surgeryAmount").oninput=updatePaymentSummary;$("surgeryPaid").oninput=updatePaymentSummary;$("todayBtn").onclick=()=>{selectedDate=new Date();activeFilter=null;render()};$("seeAllSurgeries").onclick=()=>switchView("cirugias");
+if($("nextWeek"))$("nextWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()+7);selectedDate=new Date(selectedDate);render();};$("closeModal").onclick=()=>$("modal").classList.add("hidden");$("type").onchange=updateFields;$("enmaActivityType").onchange=updateEnmaActivityFields;$("source").onchange=updateOtherSourceField;$("postOpUnit").onchange=updatePostOpCustomField;$("surgeryAmount").oninput=updatePaymentSummary;$("surgeryPaid").oninput=updatePaymentSummary;$("todayBtn").onclick=()=>{selectedDate=new Date();activeFilter=null;render()};$("seeAllSurgeries").onclick=()=>switchView("cirugias");
 $("statsPrevMonth").onclick=()=>{statsDate=new Date(statsDate.getFullYear(),statsDate.getMonth()-1,1);renderStats();};
 $("statsNextMonth").onclick=()=>{statsDate=new Date(statsDate.getFullYear(),statsDate.getMonth()+1,1);renderStats();};document.querySelectorAll(".summary-card").forEach(b=>b.onclick=()=>{activeFilter=activeFilter===b.dataset.filter?null:b.dataset.filter;render()});$("patientSearch")?.addEventListener("input",e=>renderPatients(e.target.value));
 
@@ -980,7 +1066,9 @@ function saveActivityFromForm(){
     syncEasyTimeToHidden();
 
     const date=$("formDate").value;
-    const name=$("name").value.trim();
+    const type=$("type").value;
+    const isEnma=type==="enma";
+    const name=isEnma?"":$("name").value.trim();
 
     if(!date){
       if(feedback){feedback.textContent="Selecciona una fecha.";feedback.classList.add("error");}
@@ -988,16 +1076,20 @@ function saveActivityFromForm(){
       return;
     }
 
-    if(!name){
+    if(!isEnma && !name){
       if(feedback){feedback.textContent="Ingresa el nombre del paciente.";feedback.classList.add("error");}
       $("name").focus();
       return;
     }
+    if(isEnma && $("enmaActivityType").value==="otro" && !$("enmaOtherActivity").value.trim()){
+      if(feedback){feedback.textContent="Especifica la actividad de Enma.";feedback.classList.add("error");}
+      $("enmaOtherActivity").focus();
+      return;
+    }
 
-    const patient=upsertPatientFromForm();
+    const patient=isEnma?null:upsertPatientFromForm();
     const id=$("editId").value||newLocalId();
-    const type=$("type").value;
-    const phones=getPhoneRows();
+    const phones=isEnma?[]:getPhoneRows();
 
     const data={
       id,
@@ -1005,14 +1097,22 @@ function saveActivityFromForm(){
       date,
       time:$("time").value||"08:00",
       type,
-      source:$("source").value,
-      sourceOther:$("source").value==="Otro"?$("sourceOther").value.trim():"",
-      referredBy:$("source").value==="Referido"?$("referredBy").value.trim():"",
+      source:isEnma?"":$("source").value,
+      sourceOther:(!isEnma && $("source").value==="Otro")?$("sourceOther").value.trim():"",
+      referredBy:(!isEnma && $("source").value==="Referido")?$("referredBy").value.trim():"",
       name,
-      age:$("age").value,
-      dni:$("dni").value.trim(),
+      age:isEnma?"":$("age").value,
+      dni:isEnma?"":$("dni").value.trim(),
       phones,
       phone:phones[0]?.number||"",
+      enmaActivityType:isEnma?$("enmaActivityType").value:"",
+      enmaCallName:isEnma&&$("enmaActivityType").value==="llamar"?$("enmaCallName").value.trim():"",
+      enmaCallPhone:isEnma&&$("enmaActivityType").value==="llamar"?$("enmaCallPhone").value.trim():"",
+      enmaCallReason:isEnma&&$("enmaActivityType").value==="llamar"?$("enmaCallReason").value.trim():"",
+      enmaMeetingSubject:isEnma&&$("enmaActivityType").value==="reunion"?$("enmaMeetingSubject").value.trim():"",
+      enmaMeetingPlace:isEnma&&$("enmaActivityType").value==="reunion"?$("enmaMeetingPlace").value.trim():"",
+      enmaMeetingReason:isEnma&&$("enmaActivityType").value==="reunion"?$("enmaMeetingReason").value.trim():"",
+      enmaOtherActivity:isEnma&&$("enmaActivityType").value==="otro"?$("enmaOtherActivity").value.trim():"",
       simplePaymentStatus:$("simplePaymentStatus").value,
       simplePaymentAmount:$("simplePaymentStatus").value==="pagada"?$("simplePaymentAmount").value:"",
       surgeryName:$("surgeryName").value.trim(),
@@ -1078,12 +1178,18 @@ function switchView(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active-view"));
   $(`${name}View`).classList.add("active-view");
   if(name==="pacientes")renderPatients();
+  if(name==="recibos"){
+    const frame=$("receiptsFrame");
+    if(frame&&frame.contentWindow)setTimeout(()=>frame.contentWindow.postMessage({type:"refreshPatients"},"*"),80);
+  }
   if(name==="estadisticas"){
     statsDate=new Date(selectedDate.getFullYear(),selectedDate.getMonth(),1);
     renderStats();
   }
 }
 document.querySelectorAll(".nav-btn").forEach(n=>n.onclick=()=>switchView(n.dataset.view));
+window.addEventListener("message",e=>{if(e.data?.type==="masvida-receipts-updated"&&$("pacientesView")?.classList.contains("active-view"))renderPatients()});
+window.addEventListener("storage",e=>{if(e.key===RECEIPT_STORE&&$("pacientesView")?.classList.contains("active-view"))renderPatients()});
 
 $("searchBtn").onclick=()=>{$("searchOverlay").classList.remove("hidden");$("globalSearch").focus();renderGlobal()};
 $("closeSearch").onclick=()=>$("searchOverlay").classList.add("hidden");
@@ -1091,7 +1197,7 @@ $("globalSearch").oninput=renderGlobal;
 function renderGlobal(){
   const q=$("globalSearch").value.toLowerCase().trim();
   const list=appointments.filter(a=>!q||[a.name,a.dni,a.phone,...normalizePhones(a.phones,a.phone).map(x=>`${x.owner} ${x.number}`),a.surgeryName,a.source,a.sourceOther,a.referredBy].join(" ").toLowerCase().includes(q)).slice(0,20);
-  $("globalResults").innerHTML=list.length?list.map(a=>`<div class="result-card"><h3>${esc(a.name)}</h3><p>${esc(a.date)} · ${esc(a.time)} · ${label(a.type)}</p><p>DNI ${esc(a.dni||"—")} · ${esc(phonesDisplay(a.phones,a.phone))}</p></div>`).join(""):`<div class="empty">No se encontraron resultados.</div>`;
+  $("globalResults").innerHTML=list.length?list.map(a=>a.type==="enma"?`<div class="result-card"><h3>${esc(enmaActivityLabel(a.enmaActivityType))}</h3><p>${esc(a.date)} · ${esc(a.time)} · ${label(a.type)}</p><p>${esc(a.enmaCallName||a.enmaMeetingSubject||a.enmaOtherActivity||"Actividad personal")}</p></div>`:`<div class="result-card"><h3>${esc(a.name)}</h3><p>${esc(a.date)} · ${esc(a.time)} · ${label(a.type)}</p><p>DNI ${esc(a.dni||"—")} · ${esc(phonesDisplay(a.phones,a.phone))}</p></div>`).join(""):`<div class="empty">No se encontraron resultados.</div>`;
 }
 
 $("goDateBtn").onclick=()=>{$("jumpDateInput").value=dateKey(selectedDate);$("dateOverlay").classList.remove("hidden")};
@@ -1151,6 +1257,7 @@ $("exportBackupBtn").onclick=async()=>{
     createdAt:new Date().toISOString(),
     appointments,
     patients,
+    receipts:getReceipts(),
     quickNotes:localStorage.getItem("masVidaQuickNotes")||""
   };
   const plaintext=new TextEncoder().encode(JSON.stringify(payload));
@@ -1192,6 +1299,7 @@ $("restoreBackupBtn").onclick=async()=>{
     if(!confirm("Esto reemplazará los datos actuales de Más Vida por los de la copia. ¿Continuar?"))return;
     appointments=payload.appointments;
     patients=payload.patients;
+    localStorage.setItem(RECEIPT_STORE,JSON.stringify(Array.isArray(payload.receipts)?payload.receipts:[]));
     localStorage.setItem("masVidaQuickNotes",payload.quickNotes||"");
     if($("quickNotes"))$("quickNotes").value=payload.quickNotes||"";
     save();

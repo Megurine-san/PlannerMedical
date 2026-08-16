@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Más Vida</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=5.22.0" />
+  <link rel="stylesheet" href="style.css?v=5.31.0" />
 <style>
 /* v5.25: hora escribible; AM/PM conserva su selector */
 #hourSelect, #minuteSelect, #timeHour, #timeMinute{
@@ -30,6 +30,7 @@
       <nav class="nav">
         <button class="nav-btn active" data-view="agenda">▣ <span>Agenda</span></button>
         <button class="nav-btn" data-view="pacientes">♙ <span>Pacientes</span></button>
+        <button class="nav-btn" data-view="recibos">▤ <span>Recibos</span></button>
         <button class="nav-btn" data-view="cirugias">✎ <span>Cirugías</span></button>
         <button class="nav-btn" data-view="controles">♡ <span>Controles</span></button>
         <button class="nav-btn" data-view="estadisticas">▥ <span>Estadísticas</span></button>
@@ -73,10 +74,12 @@
               <div class="summary-row summary-six">
                 <button class="summary-card consult" data-filter="consulta"><div class="summary-icon">▣</div><div><span>Consultas</span><strong id="consultCount">0</strong></div></button>
                 <button class="summary-card surgery" data-filter="cirugia"><div class="summary-icon">♡</div><div><span>Cirugías</span><strong id="surgeryCount">0</strong></div></button>
+                <button class="summary-card pending-surgery" data-filter="cirugia_pendiente"><div class="summary-icon">◇</div><div><span>Cirugías Pendientes</span><strong id="pendingSurgeryCount">0</strong></div></button>
                 <button class="summary-card control" data-filter="control"><div class="summary-icon">♙</div><div><span>Controles</span><strong id="controlCount">0</strong></div></button>
                 <button class="summary-card postcirugia" data-filter="postcirugia"><div class="summary-icon">✚</div><div><span>Post Cirugías</span><strong id="postSurgeryCount">0</strong></div></button>
                 <button class="summary-card muestra" data-filter="muestra"><div class="summary-icon">◉</div><div><span>Muestra Patológica</span><strong id="pathologyCount">0</strong></div></button>
                 <button class="summary-card laboratorio" data-filter="laboratorio"><div class="summary-icon">⌁</div><div><span>Apoyo en Exámenes de Laboratorio</span><strong id="labCount">0</strong></div></button>
+                <button class="summary-card enma" data-filter="enma"><div class="summary-icon">✦</div><div><span>Actividades Enma</span><strong id="enmaCount">0</strong></div></button>
               </div>
 
               <div id="timeline" class="timeline"></div>
@@ -113,6 +116,16 @@
           </div>
           <input id="patientSearch" class="wide-search" placeholder="⌕ Buscar paciente..." />
           <div id="patientResults" class="list-grid"></div>
+        </section>
+
+        <section id="recibosView" class="view receipts-view">
+          <div class="receipts-view-head">
+            <div>
+              <h2>Recibos de ingreso</h2>
+              <p>Usa los mismos pacientes de la agenda. Los recibos quedan vinculados a cada paciente.</p>
+            </div>
+          </div>
+          <iframe id="receiptsFrame" class="receipts-frame" src="recibos.html" title="Recibos de ingreso Más Vida"></iframe>
         </section>
 
         <section id="cirugiasView" class="view">
@@ -240,15 +253,17 @@
           <label>Tipo
             <select id="type" required>
               <option value="consulta">CONSULTA</option>
+              <option value="cirugia_pendiente">CIRUGÍA PENDIENTE</option>
               <option value="cirugia">CIRUGÍA</option>
               <option value="control">CONTROL</option>
               <option value="postcirugia">POST CIRUGÍA</option>
               <option value="muestra">MUESTRA PATOLÓGICA</option>
               <option value="laboratorio">APOYO EN EXÁMENES DE LABORATORIO</option>
+              <option value="enma">ACTIVIDADES ENMA</option>
             </select>
           </label>
 
-          <label>Origen
+          <label id="sourceFieldLabel">Origen
             <select id="source">
               <option value="Facebook">FACEBOOK</option>
               <option value="TikTok">TIKTOK</option>
@@ -270,6 +285,51 @@
           <label>¿Quién lo refirió?
             <input id="referredBy" placeholder="Ej. Paciente María López, Dr. Pérez, familiar..." />
           </label>
+        </div>
+
+        <div id="enmaFields" class="form-section enma-section hidden">
+          <h3>Actividades Enma</h3>
+          <p class="section-help">Agenda personal de Enma. Estas actividades no se vinculan a pacientes.</p>
+
+          <label>Actividad
+            <select id="enmaActivityType">
+              <option value="llamar">LLAMAR</option>
+              <option value="reunion">PROGRAMAR REUNIÓN</option>
+              <option value="otro">OTRO</option>
+            </select>
+          </label>
+
+          <div id="enmaCallFields" class="enma-detail-group">
+            <div class="form-grid two">
+              <label>Nombre de la persona a llamar
+                <input id="enmaCallName" placeholder="Ej. Dra. Pérez" />
+              </label>
+              <label>Número de teléfono
+                <input id="enmaCallPhone" inputmode="tel" placeholder="Ej. 987654321" />
+              </label>
+            </div>
+            <label>Motivo de la llamada
+              <textarea id="enmaCallReason" rows="3" placeholder="Escriba el motivo de la llamada..."></textarea>
+            </label>
+          </div>
+
+          <div id="enmaMeetingFields" class="enma-detail-group hidden">
+            <label>Reunión de qué
+              <input id="enmaMeetingSubject" placeholder="Ej. Coordinación de horarios" />
+            </label>
+            <label>Lugar de la reunión
+              <input id="enmaMeetingPlace" placeholder="Ej. Clínica Miranda, consultorio 404" />
+            </label>
+            <label>Motivo de la reunión
+              <textarea id="enmaMeetingReason" rows="3" placeholder="Escriba el motivo de la reunión..."></textarea>
+            </label>
+          </div>
+
+          <div id="enmaOtherFields" class="enma-detail-group hidden">
+            <label>Especificar otra actividad
+              <textarea id="enmaOtherActivity" rows="4" placeholder="Escriba la actividad que desea agendar..."></textarea>
+            </label>
+          </div>
         </div>
 
         <!-- En controles y post cirugía, esto aparece ANTES de los datos del paciente -->

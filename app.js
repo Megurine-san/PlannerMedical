@@ -739,7 +739,7 @@ function surgeryChargeTypeLabel(v){
 }
 
 function paymentText(a){
-  if(a.type==="enma") return {pill:"",detail:"",balance:0};
+  if(a.type==="enma" && !isEnmaPatientActivity(a)) return {pill:"",detail:"",balance:0};
   if(a.type==="cirugia"){
     const total=Number(a.surgeryAmount||0),paid=Number(a.surgeryPaid||0),balance=Math.max(0,total-paid);
     const status=balance<=0&&total>0?"Pagado completo":paid>0?"A cuenta":"Pendiente";
@@ -749,7 +749,7 @@ function paymentText(a){
     return {pill:"Gratis",detail:"",balance:0};
   }
   const amount=Number(a.simplePaymentAmount||0);
-  if(a.type==="consulta"){
+  if(a.type==="consulta" || (a.type==="enma" && isEnmaPatientActivity(a))){
     const methods=normalizeConsultPaymentMethods(a.consultPaymentMethods,a.simplePaymentAmount);
     const total=methods.length?methods.reduce((sum,m)=>sum+Number(m.amount||0),0):amount;
     const pending=methods.reduce((sum,m)=>sum+(m.status==="pendiente"?Number(m.amount||0):0),0);
@@ -766,7 +766,7 @@ function renderTimeline(list){
     let extra="";
     if(a.type==="cirugia"){
       extra=`<div class="surgery-team"><b>EQUIPO QUIRÚRGICO</b><br>👤 Cirujano 1: ${esc(a.surgeon1||"—")}<br>👤 Cirujano 2: ${esc(a.surgeon2||"—")}<br>👤 Anestesiólogo: ${esc(a.anesthesiologist||"—")}<br>👤 Instrumentista: ${esc(a.instrumentist||"—")}<div class="surgery-payment"><b>${esc(surgeryChargeTypeLabel(a.surgeryChargeType||"normal"))}</b></div><div class="surgery-payment ${pay.balance>0?"balance-due":"paid-full"}">${esc(pay.detail)}</div></div>`;
-    } else if(a.type==="consulta" && pay.detail){
+    } else if((a.type==="consulta" || (a.type==="enma" && isEnmaPatientActivity(a))) && pay.detail){
       extra=`<div class="postop-info"><strong>Detalle de pago</strong><span>${esc(pay.detail)}</span></div>`;
     } else if(a.type==="control"){
       const reason=(a.controlReason==="Otro"&&a.controlReasonOther)?`Otro: ${a.controlReasonOther}`:(a.controlReason||"Control");
@@ -791,7 +791,7 @@ function renderTimeline(list){
         extra=`<div class="postop-info enma-summary"><strong>✦ Actividad</strong></div>`;
       }
     }
-    const displayedSource=a.type==="enma"?"":sourceDisplay(a);const origin=displayedSource?`<span class="origin-pill">Origen: ${esc(displayedSource)}</span>`:"";
+    const displayedSource=(a.type==="enma" && !isEnmaPatientActivity(a))?"":sourceDisplay(a);const origin=displayedSource?`<span class="origin-pill">Origen: ${esc(displayedSource)}</span>`:"";
     const surgeryName=a.type==="cirugia"&&a.surgeryName?` · ${esc(a.surgeryName)}`:"";
     const payBtn=a.type==="cirugia"&&pay.balance>0?`<button class="pay-btn" onclick="openPayment('${a.id}')">Agregar pago</button>`:"";
     return `<div class="appointment-row">
@@ -799,7 +799,7 @@ function renderTimeline(list){
       <article class="appt-card ${a.type}">
         <div>
           <span class="type-pill">${label(a.type)}${surgeryName}</span>${origin}${pay.pill?`<span class="payment-pill">${esc(pay.pill)}</span>`:""}
-          ${a.type==="enma"?`<div class="patient-line enma-title"><strong>${esc(a.enmaActivityType==="otro"?(a.enmaOtherActivity||"Sin especificar"):enmaActivityLabel(a.enmaActivityType))}</strong></div>`:`<div class="patient-line"><strong>${esc(a.name)}</strong><span class="patient-age">${a.age?esc(a.age)+" años":""}</span></div><div class="patient-meta"><span>▣ DNI: ${esc(a.dni||"—")}</span><span>☎ ${esc(phonesDisplay(a.phones,a.phone))}</span></div>`}
+          ${a.type==="enma" && !isEnmaPatientActivity(a)?`<div class="patient-line enma-title"><strong>${esc(a.enmaActivityType==="otro"?(a.enmaOtherActivity||"Sin especificar"):enmaActivityLabel(a.enmaActivityType))}</strong></div>`:`<div class="patient-line"><strong>${esc(a.name)}</strong><span class="patient-age">${a.age?esc(a.age)+" años":""}</span></div><div class="patient-meta"><span>▣ DNI: ${esc(a.dni||"—")}</span><span>☎ ${esc(phonesDisplay(a.phones,a.phone))}</span></div>`}
         </div>
         ${extra}
         <div class="actions">${payBtn}<button class="edit-btn" onclick="editAppointment('${a.id}')">Editar</button><button class="more-btn" onclick="editAppointment('${a.id}')">•••</button></div>
@@ -1093,14 +1093,28 @@ function renderStats(){
   }).join("");
 }
 
+function isEnmaPatientActivity(a){
+  return (typeof a==="string" ? a : a?.enmaActivityType)==="apoyo_emocional_espiritual";
+}
 function updateEnmaActivityFields(){
   const kind=$("enmaActivityType")?.value||"llamar";
   $("enmaCallFields")?.classList.toggle("hidden",kind!=="llamar");
   $("enmaMeetingFields")?.classList.toggle("hidden",kind!=="reunion");
   $("enmaOtherFields")?.classList.toggle("hidden",kind!=="otro");
+  // Este subtipo funciona como una consulta: paciente, origen y pago completos.
+  if($("type")?.value==="enma") updateFieldsVisibilityForEnmaSupport(kind);
+}
+function updateFieldsVisibilityForEnmaSupport(kind){
+  const support=kind==="apoyo_emocional_espiritual";
+  document.querySelector(".patient-section")?.classList.toggle("hidden",!support);
+  $("sourceFieldLabel")?.classList.toggle("hidden",!support);
+  $("otherSourceField")?.classList.toggle("hidden",!support || $("source").value!=="Otro");
+  $("referredByField")?.classList.toggle("hidden",!support || $("source").value!=="Referido");
+  $("consultControlPaymentFields")?.classList.toggle("hidden",!support);
+  updateSimplePaymentAmountField();
 }
 function enmaActivityLabel(kind){
-  return kind==="reunion"?"PROGRAMAR REUNIÓN":kind==="otro"?"OTRO":"LLAMAR";
+  return kind==="reunion"?"PROGRAMAR REUNIÓN":kind==="apoyo_emocional_espiritual"?"APOYO EMOCIONAL Y ESPIRITUAL":kind==="otro"?"OTRO":"LLAMAR";
 }
 function updateFields(){
   const t=$("type").value;
@@ -1118,7 +1132,7 @@ function updateFields(){
   $("referredByField")?.classList.toggle("hidden",isEnma || $("source").value!=="Referido");
 
   // Pago simple para Consulta, Cirugía Pendiente y Control. Las actividades de Enma no tienen pago.
-  const showSimplePayment=(t==="consulta"||t==="cirugia_pendiente"||t==="control");
+  const showSimplePayment=(t==="consulta"||t==="cirugia_pendiente"||t==="control"||(isEnma && isEnmaPatientActivity($("enmaActivityType").value)));
   $("consultControlPaymentFields").classList.toggle("hidden",!showSimplePayment);
 
   updateEnmaActivityFields();
@@ -1132,7 +1146,7 @@ function updateFields(){
 
 function updateSimplePaymentAmountField(){
   const isPaid=$("simplePaymentStatus").value==="pagada";
-  const isConsult=$("type").value==="consulta";
+  const isConsult=$("type").value==="consulta" || ($("type").value==="enma" && isEnmaPatientActivity($("enmaActivityType").value));
   $("simplePaymentAmountField").classList.toggle("hidden",!isPaid || isConsult);
   $("consultationPaymentDetails")?.classList.toggle("hidden",!isPaid || !isConsult);
   if(!isPaid){
@@ -1259,7 +1273,7 @@ $("addPaymentConfirm").onclick=()=>{
 $("addBtn").onclick=openNew;
 $("simplePaymentStatus").onchange=updateSimplePaymentAmountField;
 if($("prevWeek"))$("prevWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()-7);selectedDate=new Date(selectedDate);render();};
-if($("nextWeek"))$("nextWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()+7);selectedDate=new Date(selectedDate);render();};$("closeModal").onclick=()=>$("modal").classList.add("hidden");$("type").onchange=updateFields;$("enmaActivityType").onchange=updateEnmaActivityFields;$("source").onchange=updateOtherSourceField;$("postOpUnit").onchange=updatePostOpCustomField;$("surgeryAmount").oninput=updatePaymentSummary;$("surgeryPaid").oninput=updatePaymentSummary;$("todayBtn").onclick=()=>{selectedDate=new Date();activeFilter=null;render()};$("seeAllSurgeries").onclick=()=>switchView("cirugias");
+if($("nextWeek"))$("nextWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()+7);selectedDate=new Date(selectedDate);render();};$("closeModal").onclick=()=>$("modal").classList.add("hidden");$("type").onchange=updateFields;$("enmaActivityType").onchange=updateEnmaActivityFields;$("source").onchange=()=>{updateOtherSourceField(); if($("type").value==="enma" && isEnmaPatientActivity($("enmaActivityType").value)) updateFieldsVisibilityForEnmaSupport($("enmaActivityType").value);};$("postOpUnit").onchange=updatePostOpCustomField;$("surgeryAmount").oninput=updatePaymentSummary;$("surgeryPaid").oninput=updatePaymentSummary;$("todayBtn").onclick=()=>{selectedDate=new Date();activeFilter=null;render()};$("seeAllSurgeries").onclick=()=>switchView("cirugias");
 $("statsPrevMonth").onclick=()=>{statsDate=new Date(statsDate.getFullYear(),statsDate.getMonth()-1,1);renderStats();};
 $("statsNextMonth").onclick=()=>{statsDate=new Date(statsDate.getFullYear(),statsDate.getMonth()+1,1);renderStats();};document.querySelectorAll(".summary-card").forEach(b=>b.onclick=()=>{activeFilter=activeFilter===b.dataset.filter?null:b.dataset.filter;render()});$("patientSearch")?.addEventListener("input",e=>renderPatients(e.target.value));
 
@@ -1268,7 +1282,7 @@ setEasyTimeFrom24("08:00");
 $("timeHour").onchange=syncEasyTimeToHidden;
 $("timeMinute").onchange=syncEasyTimeToHidden;
 $("timePeriod").onchange=syncEasyTimeToHidden;
-$("source").onchange=updateOtherSourceField;
+$("source").onchange=()=>{updateOtherSourceField(); if($("type").value==="enma" && isEnmaPatientActivity($("enmaActivityType").value)) updateFieldsVisibilityForEnmaSupport($("enmaActivityType").value);};
 $("postOpUnit").onchange=updatePostOpCustomField;
 $("controlReason").onchange=updateControlReasonOther;
 $("surgeon1").onchange=updateSurgeryTeamOtherFields;
@@ -1307,7 +1321,8 @@ function saveActivityFromForm(){
     const date=$("formDate").value;
     const type=$("type").value;
     const isEnma=type==="enma";
-    const name=isEnma?"":$("name").value.trim();
+    const enmaHasPatient=isEnma && isEnmaPatientActivity($("enmaActivityType").value);
+    const name=(isEnma && !enmaHasPatient)?"":$("name").value.trim();
 
     if(!date){
       if(feedback){feedback.textContent="Selecciona una fecha.";feedback.classList.add("error");}
@@ -1315,7 +1330,7 @@ function saveActivityFromForm(){
       return;
     }
 
-    if(!isEnma && !name){
+    if((!isEnma || enmaHasPatient) && !name){
       if(feedback){feedback.textContent="Ingresa el nombre del paciente.";feedback.classList.add("error");}
       $("name").focus();
       return;
@@ -1325,7 +1340,7 @@ function saveActivityFromForm(){
       $("enmaOtherActivity").focus();
       return;
     }
-    if(type==="consulta" && $("simplePaymentStatus").value==="pagada"){
+    if((type==="consulta" || enmaHasPatient) && $("simplePaymentStatus").value==="pagada"){
       const paymentRows=[...$("consultPaymentMethods").querySelectorAll(".consult-payment-row")];
       const incompleteOther=paymentRows.find(row=>row.querySelector(".consult-payment-type").value==="OTRO" && !row.querySelector(".consult-payment-other").value.trim());
       if(incompleteOther){
@@ -1335,9 +1350,9 @@ function saveActivityFromForm(){
       }
     }
 
-    const patient=isEnma?null:upsertPatientFromForm();
+    const patient=(isEnma && !enmaHasPatient)?null:upsertPatientFromForm();
     const id=$("editId").value||newLocalId();
-    const phones=isEnma?[]:getPhoneRows();
+    const phones=(isEnma && !enmaHasPatient)?[]:getPhoneRows();
 
     const data={
       id,
@@ -1345,12 +1360,12 @@ function saveActivityFromForm(){
       date,
       time:$("time").value||"08:00",
       type,
-      source:isEnma?"":$("source").value,
-      sourceOther:(!isEnma && $("source").value==="Otro")?$("sourceOther").value.trim():"",
-      referredBy:(!isEnma && $("source").value==="Referido")?$("referredBy").value.trim():"",
+      source:(isEnma && !enmaHasPatient)?"":$("source").value,
+      sourceOther:((!isEnma || enmaHasPatient) && $("source").value==="Otro")?$("sourceOther").value.trim():"",
+      referredBy:((!isEnma || enmaHasPatient) && $("source").value==="Referido")?$("referredBy").value.trim():"",
       name,
-      age:isEnma?"":$("age").value,
-      dni:isEnma?"":$("dni").value.trim(),
+      age:(isEnma && !enmaHasPatient)?"":$("age").value,
+      dni:(isEnma && !enmaHasPatient)?"":$("dni").value.trim(),
       phones,
       phone:phones[0]?.number||"",
       enmaActivityType:isEnma?$("enmaActivityType").value:"",
@@ -1363,7 +1378,7 @@ function saveActivityFromForm(){
       enmaOtherActivity:isEnma&&$("enmaActivityType").value==="otro"?$("enmaOtherActivity").value.trim():"",
       simplePaymentStatus:$("simplePaymentStatus").value,
       simplePaymentAmount:$("simplePaymentStatus").value==="pagada"?$("simplePaymentAmount").value:"",
-      consultPaymentMethods:(type==="consulta" && $("simplePaymentStatus").value==="pagada")?getConsultPaymentRows():[],
+      consultPaymentMethods:((type==="consulta" || enmaHasPatient) && $("simplePaymentStatus").value==="pagada")?getConsultPaymentRows():[],
       surgeryName:$("surgeryName").value.trim(),
       surgeryAmount:$("surgeryAmount").value,
       surgeryPaid:$("surgeryPaid").value,

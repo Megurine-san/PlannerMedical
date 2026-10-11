@@ -650,6 +650,23 @@
     </div>
   </div>
 
-  <script src="app.js?v=5.22.0"></script>
+  <div id="patientEditOverlay" class="overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header"><h2>Editar datos del paciente</h2><button type="button" id="closePatientEdit" class="close-btn">×</button></div>
+      <form id="patientEditForm">
+        <input type="hidden" id="patientEditId" />
+        <label>Nombre completo<input id="patientEditName" required /></label>
+        <div class="form-grid two">
+          <label>Edad<input id="patientEditAge" type="number" min="0" max="120" /></label>
+          <label>DNI<input id="patientEditDni" inputmode="numeric" /></label>
+        </div>
+        <div id="patientEditPhones"></div>
+        <button type="button" id="patientEditAddPhone" class="secondary-btn">＋ Agregar teléfono</button>
+        <p>Los datos actualizados estarán disponibles en el autocompletado. Se conservarán las citas, fechas de cirugía y recibos.</p>
+        <div class="modal-actions"><button type="submit" class="save-btn">Guardar datos del paciente</button></div>
+      </form>
+    </div>
+  </div>
+  <script src="app.js?v=5.39.0"></script>
 </body>
 </html>

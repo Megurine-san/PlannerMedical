@@ -244,7 +244,7 @@ function syncPatientFromReceipt(){
   let p=list.find(x=>(currentPatientId&&x.id===currentPatientId)||(dni&&x.dni===dni)||((x.name||'').toLowerCase()===name.toLowerCase()));
   if(!p){p={id:newLocalId(),name,age,dni,phone,phones:phone?[{owner:'Paciente',number:phone}]:[]};list.push(p)}
   else{
-    p.name=name;p.age=age;p.dni=dni;p.phone=phone;
+    p.name=name;p.age=age;p.dni=dni||p.dni||'';p.phone=phone;
     const phones=normalizePhones(p.phones,p.phone);
     if(phone){
       const idx=phones.findIndex(x=>(x.owner||'').toLowerCase()==='paciente');
@@ -321,3 +321,5 @@ const pendingPatient=localStorage.getItem('mv_receipt_patient_to_load');if(pendi
 const pendingReceipt=localStorage.getItem('mv_receipt_to_open');if(pendingReceipt){localStorage.removeItem('mv_receipt_to_open');loadReceiptNumber(pendingReceipt)}
 </script>
 </body></html>
+
+<script>window.addEventListener("message",e=>{if(e.source===window.parent && e.data?.type==="patientsUpdated")refreshPatientLookup()});</script>

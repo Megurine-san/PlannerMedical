@@ -203,7 +203,7 @@ function samePatientAppointment(a,p){
   if(a.patientId && p.id && a.patientId===p.id) return true;
   const pdni=String(p.dni||"").trim().toLowerCase();
   const adni=String(a.dni||"").trim().toLowerCase();
-  if(pdni && adni && pdni===adni) return true;
+  if(pdni && adni) return pdni===adni;
   const pname=String(p.name||"").trim().toLowerCase();
   const aname=String(a.name||"").trim().toLowerCase();
   return !!pname && pname===aname;
@@ -400,7 +400,7 @@ function upsertPatientFromForm(){
     p={id:newLocalId(),name,age,dni,phone,phones};
     patients.push(p);
   }else{
-    p.name=name;p.age=age;p.dni=dni;p.phone=phone;p.phones=phones;
+    p.name=name;p.age=age;p.dni=dni||p.dni||"";p.phone=phone;p.phones=phones;
   }
   return p;
 }
@@ -927,6 +927,83 @@ function openSavedReceipt(number){
   if(frame&&frame.contentWindow)setTimeout(()=>frame.contentWindow.postMessage({type:"loadReceipt",number},"*"),120);
 }
 
+function addPatientEditPhone(owner="Paciente",number=""){
+  const row=document.createElement("div");row.className="phone-row";
+  row.innerHTML=`<label>De quién es<input class="phone-owner" value="${esc(owner)}" /></label><label>Número<input class="phone-number" type="tel" value="${esc(number)}" /></label><button type="button" class="remove-phone-btn">×</button>`;
+  row.querySelector("button").onclick=()=>row.remove();
+  $("patientEditPhones").appendChild(row);
+}
+function editPatientDetails(id){
+  const p=patients.find(x=>x.id===id);if(!p)return;
+  $("patientEditId").value=p.id;$("patientEditName").value=p.name||"";
+  $("patientEditAge").value=p.age||"";$("patientEditDni").value=p.dni||"";
+  $("patientEditPhones").innerHTML="";
+  const phones=normalizePhones(p.phones,p.phone);
+  (phones.length?phones:[{owner:"Paciente",number:""}]).forEach(x=>addPatientEditPhone(x.owner,x.number));
+  $("patientEditOverlay").classList.remove("hidden");
+}
+function updatePatientDetails(id,details){
+  const p=patients.find(x=>x.id===id);if(!p)return false;
+  // Link legacy history before changing a name or adding a previously unknown DNI.
+  const visits=appointments.filter(a=>samePatientAppointment(a,p));
+  const receipts=getReceipts();
+  receipts.filter(r=>receiptMatchesPatient(r,p)).forEach(r=>{r.patientId=p.id});
+  Object.assign(p,details);
+  visits.forEach(a=>{a.patientId=p.id;a.name=p.name;a.age=p.age;a.dni=p.dni;a.phone=p.phone;a.phones=p.phones.map(x=>({...x}))});
+  localStorage.setItem(RECEIPT_STORE,JSON.stringify(receipts));save();return true;
+}
+$("closePatientEdit").onclick=()=>$("patientEditOverlay").classList.add("hidden");
+$("patientEditAddPhone").onclick=()=>addPatientEditPhone();
+$("patientEditForm").onsubmit=event=>{
+  event.preventDefault();
+  const name=$("patientEditName").value.trim(),dni=$("patientEditDni").value.trim(),id=$("patientEditId").value;
+  if(!name)return;
+  if(dni&&patients.some(p=>p.id!==id&&String(p.dni||"").trim()===dni)){
+    alert("Ese DNI ya pertenece a otra ficha. Revisa los pacientes antes de guardar para evitar duplicados.");return;
+  }
+  const phones=[...$("patientEditPhones").querySelectorAll(".phone-row")].map(row=>({owner:row.querySelector(".phone-owner").value.trim()||"Paciente",number:row.querySelector(".phone-number").value.trim()})).filter(x=>x.number);
+  if(!updatePatientDetails(id,{name,dni,age:$("patientEditAge").value,phones,phone:phones[0]?.number||""}))return;
+  refreshPatientDatalist();render();$("patientEditOverlay").classList.add("hidden");
+  const frame=$("receiptsFrame");if(frame?.contentWindow)frame.contentWindow.postMessage({type:"patientsUpdated"},"*");
+};
+
+// Complete removal is explicit; ordinary appointment deletion remains unchanged.
+function patientRemovalSelection(p){
+  const norm=v=>String(v||"").trim().toLowerCase().replace(/\s+/g," ");
+  const sameIdentity=r=>{
+    const dni=norm(r.dni),target=norm(p.dni);
+    if(dni&&target)return dni===target;
+    return !!norm(p.name)&&norm(r.name)===norm(p.name);
+  };
+  const related=patients.filter(r=>r.id===p.id||sameIdentity(r));
+  const ids=new Set(related.map(r=>r.id).filter(Boolean));
+  const matches=r=>ids.has(r.patientId)||sameIdentity(r);
+  return {related,appointments:appointments.filter(r=>r.type!=="enma"&&matches(r)),receipts:getReceipts().filter(matches)};
+}
+function deletePatientCompletely(id){
+  const p=patients.find(r=>r.id===id);
+  if(!p)return;
+  const selection=patientRemovalSelection(p);
+  const message=`Eliminar completamente a ${p.name||"Paciente"} (DNI: ${p.dni||"sin DNI"})\n\nSe borrarán ${selection.related.length} ficha(s), ${selection.appointments.length} cita(s) y ${selection.receipts.length} recibo(s).\nLos demás pacientes se conservarán. Esta acción no se puede deshacer desde la app. Puedes cancelar y exportar un respaldo primero.\n\nPara calcular el tiempo postoperatorio después, tendrás que registrar nuevamente la cirugía y su fecha. ¿Continuar?`;
+  if(!confirm(message))return;
+  if(prompt('Para confirmar, escribe ELIMINAR:')!=="ELIMINAR")return;
+  const records=new Set(selection.related),visits=new Set(selection.appointments);
+  // Receipts were parsed separately: match by the selected stored objects' indices.
+  const receipts=getReceipts();
+  const removal=patientRemovalSelection(p);
+  const selectedReceiptKeys=new Set(removal.receipts.map(r=>JSON.stringify(r)));
+  localStorage.setItem(RECEIPT_STORE,JSON.stringify(receipts.filter(r=>!selectedReceiptKeys.has(JSON.stringify(r)))));
+  patients=patients.filter(r=>!records.has(r));
+  appointments=appointments.filter(r=>!visits.has(r));
+  save();
+  localStorage.removeItem("mv_receipt_patient_to_load");
+  localStorage.removeItem("mv_receipt_to_open");
+  refreshPatientDatalist();render();
+  // Discard any unsaved receipt form linked to the removed patient.
+  const frame=$("receiptsFrame");if(frame)frame.src=frame.src;
+  alert("Registro eliminado. Ya puedes ingresar nuevamente los datos correctos del paciente.");
+}
+
 function renderPatients(q=""){
   const query=(q||$("patientSearch")?.value||"").toLowerCase().trim();
   const list=patients.filter(p=>!query||[p.name,p.dni,p.phone,...normalizePhones(p.phones,p.phone).map(x=>`${x.owner} ${x.number}`)].join(" ").toLowerCase().includes(query));
@@ -972,6 +1049,8 @@ function renderPatients(q=""){
       </div>
 
       ${historyHtml}
+      <button type="button" class="secondary-btn edit-patient-btn" data-patient-index="${patients.indexOf(p)}">Editar datos del paciente</button>
+      <button type="button" class="secondary-btn delete-patient-btn" data-patient-index="${patients.indexOf(p)}">Eliminar paciente y todos sus registros</button>
 
       ${(()=>{
         const receipts=patientReceiptHistory(p);
@@ -984,6 +1063,12 @@ function renderPatients(q=""){
     </div>`;
   }).join("") : `<div class="empty">No se encontraron pacientes.</div>`;
 }
+$("patientResults").addEventListener("click",event=>{
+  const editButton=event.target.closest(".edit-patient-btn");
+  if(editButton){const p=patients[Number(editButton.dataset.patientIndex)];if(p)editPatientDetails(p.id);return}
+  const button=event.target.closest(".delete-patient-btn");
+  if(button){const p=patients[Number(button.dataset.patientIndex)];if(p)deletePatientCompletely(p.id)}
+});
 function renderAllSurgeries(){
   const list=appointments.filter(a=>a.type==="cirugia").sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   $("allSurgeries").innerHTML=list.length?list.map(a=>{const p=paymentText(a);return `<div class="result-card"><h3 style="color:#c674d8">${esc(a.surgeryName||"Cirugía")} — ${esc(a.name)}</h3><p>${esc(a.date)} · ${esc(a.time)} · Origen: ${esc(sourceDisplay(a)||"—")}</p><p>${esc(p.detail)}</p>${p.balance>0?`<button class="pay-btn" onclick="openPayment('${a.id}')">Agregar pago</button>`:""}</div>`}).join(""):`<div class="empty">No hay cirugías registradas.</div>`;

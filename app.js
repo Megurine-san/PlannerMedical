@@ -81,6 +81,49 @@ async function initializeSecurity(){
 
 let appointments=JSON.parse(localStorage.getItem(APPT_STORE)||"[]");
 let patients=JSON.parse(localStorage.getItem(PATIENT_STORE)||"[]");
+const BLOCKED_DAY_STORE="masVidaBlockedDays";
+function readBlockedDays(){
+  try{return normalizeBlockedDays(JSON.parse(localStorage.getItem(BLOCKED_DAY_STORE)||"{}"))}catch{return {}}
+}
+function normalizeBlockedDays(raw){
+  const result={};
+  if(!raw||typeof raw!=="object"||Array.isArray(raw))return result;
+  Object.entries(raw).forEach(([date,reason])=>{
+    if(/^\d{4}-\d{2}-\d{2}$/.test(date)&&typeof reason==="string"&&reason.trim())result[date]=reason.trim().slice(0,500);
+  });return result;
+}
+function blockedDayReason(date){return readBlockedDays()[date]||""}
+function setBlockedDay(date,reason){
+  const blocks=readBlockedDays();
+  if(reason.trim())blocks[date]=reason.trim().slice(0,500);else delete blocks[date];
+  localStorage.setItem(BLOCKED_DAY_STORE,JSON.stringify(blocks));
+}
+function blockedBookingReason(date,type,editId){
+  if(type==="enma")return "";
+  const existing=appointments.find(a=>a.id===editId);
+  // Existing bookings can still be corrected without adding or moving bookings into a blocked day.
+  if(existing&&existing.date===date&&existing.type===type)return "";
+  return blockedDayReason(date);
+}
+function showBlockedDayMessage(date,reason){
+  alert(`Este día está copado o bloqueado (${date.split("-").reverse().join("/")}).\n\nMotivo: ${reason}\n\nSelecciona otra fecha o desbloquea el día desde la agenda.`);
+}
+function renderBlockedDay(){
+  const reason=blockedDayReason(dateKey(selectedDate));
+  $("manageBlockedDayBtn").textContent=reason?"Editar bloqueo / desbloquear":"Bloquear día";
+  $("blockedDayBanner").classList.toggle("hidden",!reason);
+  $("blockedDayBanner").textContent=reason?`Día bloqueado · ${reason}`:"";
+}
+function openBlockedDayEditor(){
+  const key=dateKey(selectedDate);
+  $("blockedDayDate").value=key;
+  $("blockedDayDateLabel").textContent=formatDate(selectedDate);
+  $("blockedDayReason").value=blockedDayReason(key);
+  $("unblockDayBtn").classList.toggle("hidden",!blockedDayReason(key));
+  const count=appointments.filter(a=>a.date===key&&a.type!=="enma").length;
+  $("blockedDayExistingInfo").textContent=count?`Este día ya tiene ${count} cita(s). Se conservarán y se podrán editar; no se podrán agregar nuevas citas ni trasladar otras a este día.`:"No se podrán agendar nuevas citas de pacientes. Las actividades de Enma seguirán disponibles.";
+  $("blockedDayOverlay").classList.remove("hidden");
+}
 let selectedDate=new Date();
 let activeFilter=null;
 let statsDate=new Date();
@@ -699,7 +742,10 @@ function renderWeekStrip(){
     const dots=[...new Set(dayActivities.map(a=>a.type))].slice(0,4);
     const btn=document.createElement("button");
     btn.type="button";
-    btn.className="week-day"+(key===dateKey(selectedDate)?" active":"");
+    const blocked=blockedDayReason(key);
+    btn.className="week-day"+(key===dateKey(selectedDate)?" active":"")+(blocked?" blocked-day":"");
+    btn.title=blocked?`Día bloqueado: ${blocked}`:"";
+    btn.setAttribute("aria-label",`${formatDate(d)}${blocked?". Bloqueado: "+blocked:""}`);
     btn.innerHTML=`<span>${["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"][d.getDay()]}</span><strong>${d.getDate()}</strong><div class="week-dots">${dots.map(t=>`<i class="dot-${t}"></i>`).join("")}</div>`;
     btn.onclick=()=>{selectedDate=new Date(d);render();};
     strip.appendChild(btn);
@@ -709,6 +755,7 @@ function renderWeekStrip(){
 function render(){
   renderGreeting();
   renderWeekStrip();
+  renderBlockedDay();
 
   const selectedTitle=$("selectedDateTitle");
   if(selectedTitle){
@@ -1355,6 +1402,20 @@ $("addPaymentConfirm").onclick=()=>{
   save();$("paymentOverlay").classList.add("hidden");render();
 };
 
+$("manageBlockedDayBtn").onclick=openBlockedDayEditor;
+$("closeBlockedDay").onclick=()=>$("blockedDayOverlay").classList.add("hidden");
+$("blockedDayForm").onsubmit=event=>{
+  event.preventDefault();
+  const reason=$("blockedDayReason").value.trim();
+  if(!reason){$("blockedDayReason").focus();return}
+  setBlockedDay($("blockedDayDate").value,reason);
+  $("blockedDayOverlay").classList.add("hidden");render();
+};
+$("unblockDayBtn").onclick=()=>{
+  setBlockedDay($("blockedDayDate").value,"");
+  $("blockedDayOverlay").classList.add("hidden");render();
+};
+window.addEventListener("storage",event=>{if(event.key===BLOCKED_DAY_STORE)render()});
 $("addBtn").onclick=openNew;
 $("simplePaymentStatus").onchange=updateSimplePaymentAmountField;
 if($("prevWeek"))$("prevWeek").onclick=()=>{selectedDate.setDate(selectedDate.getDate()-7);selectedDate=new Date(selectedDate);render();};
@@ -1379,6 +1440,9 @@ if($("addConsultPaymentBtn"))$("addConsultPaymentBtn").onclick=()=>addConsultPay
 $("loadPatientBtn").onclick=()=>loadPatientFromLookup(true);
 $("clearPatientBtn").onclick=clearPatientFields;
 $("formDate").addEventListener("change",()=>{
+  const date=$("formDate").value;
+  const reason=blockedBookingReason(date,$("type").value,$("editId").value);
+  if(reason)showBlockedDayMessage(date,reason);
   if(!$("editId").value) autoFillPostOpTime();
 });
 
@@ -1405,6 +1469,12 @@ function saveActivityFromForm(){
 
     const date=$("formDate").value;
     const type=$("type").value;
+    const blockedReason=blockedBookingReason(date,type,$("editId").value);
+    if(blockedReason){
+      showBlockedDayMessage(date,blockedReason);
+      if(feedback){feedback.textContent=`Día bloqueado: ${blockedReason}`;feedback.classList.add("error")}
+      return;
+    }
     const isEnma=type==="enma";
     const enmaHasPatient=isEnma && isEnmaPatientActivity($("enmaActivityType").value);
     const name=(isEnma && !enmaHasPatient)?"":$("name").value.trim();
@@ -1615,6 +1685,7 @@ $("exportBackupBtn").onclick=async()=>{
     appointments,
     patients,
     receipts:getReceipts(),
+    blockedDays:readBlockedDays(),
     quickNotes:localStorage.getItem("masVidaQuickNotes")||""
   };
   const plaintext=new TextEncoder().encode(JSON.stringify(payload));
@@ -1654,6 +1725,7 @@ $("restoreBackupBtn").onclick=async()=>{
     const payload=JSON.parse(new TextDecoder().decode(decrypted));
     if(!Array.isArray(payload.appointments)||!Array.isArray(payload.patients))throw new Error("Contenido inválido");
     if(!confirm("Esto reemplazará los datos actuales de Más Vida por los de la copia. ¿Continuar?"))return;
+    localStorage.setItem(BLOCKED_DAY_STORE,JSON.stringify(normalizeBlockedDays(payload.blockedDays)));
     appointments=payload.appointments;
     patients=payload.patients;
     localStorage.setItem(RECEIPT_STORE,JSON.stringify(Array.isArray(payload.receipts)?payload.receipts:[]));

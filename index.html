@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Más Vida</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=5.31.0" />
+  <link rel="stylesheet" href="style.css?v=5.40.0" />
 <style>
 /* v5.25: hora escribible; AM/PM conserva su selector */
 #hourSelect, #minuteSelect, #timeHour, #timeMinute{
@@ -68,9 +68,10 @@
 
               <div class="day-title">
                 <div>🗓 <strong id="selectedDateTitle"></strong></div>
-                <button id="goDateBtn">🗓 Ir a fecha</button>
+                <div class="day-block-actions"><button id="goDateBtn">🗓 Ir a fecha</button><button id="manageBlockedDayBtn" type="button">Bloquear día</button></div>
               </div>
 
+              <div id="blockedDayBanner" class="blocked-day-banner hidden" role="status"></div>
               <div class="summary-row summary-six">
                 <button class="summary-card consult" data-filter="consulta"><div class="summary-icon">▣</div><div><span>Consultas</span><strong id="consultCount">0</strong></div></button>
                 <button class="summary-card surgery" data-filter="cirugia"><div class="summary-icon">♡</div><div><span>Cirugías</span><strong id="surgeryCount">0</strong></div></button>
@@ -667,6 +668,18 @@
       </form>
     </div>
   </div>
-  <script src="app.js?v=5.39.0"></script>
+  <div id="blockedDayOverlay" class="overlay hidden">
+    <div class="date-modal">
+      <div class="modal-header"><h2>Disponibilidad del día</h2><button id="closeBlockedDay" type="button" class="close-btn">×</button></div>
+      <form id="blockedDayForm">
+        <p id="blockedDayDateLabel"></p>
+        <input id="blockedDayDate" type="hidden" />
+        <label>Motivo del bloqueo<textarea id="blockedDayReason" rows="3" required maxlength="500" placeholder="Ej. Agenda copada, viaje del doctor, feriado…"></textarea></label>
+        <p id="blockedDayExistingInfo"></p>
+        <div class="modal-actions"><button id="unblockDayBtn" type="button" class="secondary-btn hidden">Desbloquear día</button><button type="submit" class="save-btn">Guardar bloqueo</button></div>
+      </form>
+    </div>
+  </div>
+  <script src="app.js?v=5.40.0"></script>
 </body>
 </html>

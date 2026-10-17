@@ -863,3 +863,19 @@ main{max-width:1500px;margin:auto;padding:14px 34px 40px}.layout{display:grid;gr
   .consult-payment-other-wrap{grid-column:auto}
   .remove-consult-payment-btn{width:100%;height:38px}
 }
+
+/* Occupied dates retain their warning color even while selected. */
+.week-navigation .week-strip .week-day.blocked-day,
+.week-navigation .week-strip .week-day.blocked-day.active {
+  background: #54272d !important; border: 2px solid #ed737c !important;
+  color: #ffe3e5 !important;
+}
+.week-navigation .week-strip .week-day.blocked-day > strong,
+.week-navigation .week-strip .week-day.blocked-day.active > strong,
+.week-navigation .week-strip .week-day.blocked-day > span:first-child {
+  color: #ffb0b6 !important;
+}
+.day-block-actions{display:flex;gap:8px;flex-wrap:wrap}
+.blocked-day-banner{padding:14px 18px;margin:0 0 18px;border:1px solid #ed737c;border-radius:12px;background:#54272d;color:#ffe3e5;white-space:pre-wrap;overflow-wrap:anywhere}
+#blockedDayOverlay textarea{box-sizing:border-box;width:100%;font:inherit;resize:vertical}
+#blockedDayExistingInfo{line-height:1.5}
